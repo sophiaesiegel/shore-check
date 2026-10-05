@@ -1,0 +1,55 @@
+{
+ "checked_at": "2026-10-05T22:44Z",
+ "active": {
+  "Statewide|mussel quarantine": {
+   "area": "Statewide",
+   "label": "Mussel quarantine",
+   "species": [
+    "mussels"
+   ],
+   "toxins": [],
+   "updated": null
+  },
+  "Northern Channel Islands|Domoic acid advisory": {
+   "area": "Northern Channel Islands",
+   "label": "Domoic acid advisory",
+   "species": [
+    "mussels",
+    "clams",
+    "razor",
+    "scallops",
+    "oysters"
+   ],
+   "toxins": [
+    "domoic acid"
+   ],
+   "updated": null
+  },
+  "Humboldt County|Razor clam domoic acid advisory": {
+   "area": "Humboldt County",
+   "label": "Razor clam domoic acid advisory",
+   "species": [
+    "razor"
+   ],
+   "toxins": [
+    "domoic acid"
+   ],
+   "updated": "July 29, 2026"
+  },
+  "Monterey County|Domoic acid advisory": {
+   "area": "Monterey County",
+   "label": "Domoic acid advisory",
+   "species": [
+    "mussels",
+    "clams",
+    "razor",
+    "scallops",
+    "oysters"
+   ],
+   "toxins": [
+    "domoic acid"
+   ],
+   "updated": null
+  }
+ }
+}

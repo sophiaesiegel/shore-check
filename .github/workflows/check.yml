@@ -1,0 +1,36 @@
+# Runs the Shore Check data-checker every 3 hours on GitHub's servers,
+# then saves any new data back into the repository.
+name: Check advisories
+
+on:
+  schedule:
+    - cron: "17 */3 * * *"   # minute 17 of every 3rd hour (UTC)
+  workflow_dispatch:          # adds a "Run workflow" button on GitHub
+
+permissions:
+  contents: write   # to commit the updated data files
+  issues: write     # to open an alert issue when something changes
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Run checker
+        run: python checker/check.py
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}   # optional: phone push alerts
+
+      - name: Save new data
+        run: |
+          git config user.name "shore-check-bot"
+          git config user.email "shore-check-bot@users.noreply.github.com"
+          git add data
+          git diff --cached --quiet || git commit -m "Data update $(date -u +%Y-%m-%dT%H:%MZ)"
+          git push
