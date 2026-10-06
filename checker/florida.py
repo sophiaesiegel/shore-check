@@ -5,19 +5,15 @@ Florida part of the Shore Check data-checker (called from check.py).
      (scraped from the five regional pages; FDACS has no data feed for this).
      Saves data/florida_shellfish.json and logs status changes to
      data/florida_shellfish_history.csv.
-  2. NOAA's beach-level red tide respiratory forecast (a zip of CSVs that
-     browsers can't fetch directly). Saves data/florida_respiratory.json.
 
-Returns alert lines for check.py to send: biotoxin closures and reopenings,
-and beaches forecast at Moderate or High respiratory risk.
+Returns alert lines for check.py to send: closures and reopenings caused by
+algal toxins (rain, seasonal and water-quality closures are logged, not alerted).
 """
 
 import csv
-import io
 import json
 import re
 import urllib.request
-import zipfile
 from html.parser import HTMLParser
 from pathlib import Path
 
@@ -30,7 +26,6 @@ FDACS_PAGES = {
     "Big Bend Gulf": "https://shellfish.fdacs.gov/seas/seas_bigbendgulf.htm",
     "South Gulf": "https://shellfish.fdacs.gov/seas/seas_southgulf.htm",
 }
-RESPIRATORY_ZIP = "https://nccospublicstor.blob.core.windows.net/hab-data/no_Explorer/rif_model/csv/RIFv2_currentmodelrun.zip"
 
 # Closure reasons that mean an algal toxin (vs rainfall, season, water quality...)
 BIOTOXIN = re.compile(r"karenia|red tide|brevetoxin|pyrodinium|saxitoxin|PSP|NSP|domoic|pseudo-nitzschia|biotoxin|alexandrium|dinophysis", re.I)
@@ -160,46 +155,6 @@ def update_shellfish(now):
     return alerts
 
 
-def update_respiratory(now):
-    z = zipfile.ZipFile(io.BytesIO(fetch(RESPIRATORY_ZIP)))
-    beaches = {}
-    run = None
-    for name in sorted(z.namelist()):
-        m = re.search(r"forecast_valid_(\d+)hrs", name)
-        if not m:
-            continue
-        hours = int(m.group(1))
-        for r in csv.DictReader(io.StringIO(z.read(name).decode("utf-8"))):
-            run = r.get("Model Run Time") or run
-            b = beaches.setdefault(r["Location Name"], {
-                "name": r["Location Name"], "lat": float(r["Lat"]), "lon": float(r["Lon"]),
-                "cell_count": r.get("Cell Count Category"), "sample_time": r.get("Sample Time"),
-                "forecast": [],
-            })
-            b["forecast"].append({"hours": hours, "level": r["Forecast"], "confidence": r.get("Confidence")})
-    for b in beaches.values():
-        b["forecast"].sort(key=lambda f: f["hours"])
-
-    # Beaches at Moderate/High in the next 24 h; alert only on newly risky ones.
-    path = DATA / "florida_respiratory.json"
-    before = set(json.loads(path.read_text()).get("risky", [])) if path.exists() else set()
-    risky = sorted(b["name"] for b in beaches.values()
-                   if any(f["level"] in ("Moderate", "High") for f in b["forecast"][:8]))
-    path.write_text(json.dumps(
-        {"checked_at": now, "model_run": run, "risky": risky, "beaches": list(beaches.values())}, indent=1))
-    print(f"  NOAA respiratory forecast: {len(beaches)} beaches, run {run}")
-
-    new = [n for n in risky if n not in before]
-    return [f"Red tide respiratory risk now Moderate or High (next 24 h) at: {', '.join(new)}."] if new else []
-
-
 def update(now):
-    alerts = []
     print("Checking Florida (FDACS shellfish areas)…")
-    alerts += update_shellfish(now)
-    print("Checking Florida (NOAA respiratory forecast)…")
-    try:
-        alerts += update_respiratory(now)
-    except Exception as err:
-        alerts.append(f"Couldn't read NOAA's Florida respiratory forecast ({err}).")
-    return alerts
+    return update_shellfish(now)

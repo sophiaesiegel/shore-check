@@ -8,10 +8,10 @@ A prototype that combines California's official shellfish advisories (CDPH) with
 |---|---|
 | `index.html` | Landing page: choose California or Florida |
 | `california.html` | The California app (CDPH advisories + C-HARM) |
-| `florida.html` | The Florida app (FDACS harvest areas, FWC red tide samples, NOAA beach forecast, MODIS fluorescence) |
+| `florida.html` | The Florida app (FDACS harvest areas, FWC red tide samples, MODIS fluorescence) |
 | `assets/shore.css` | Shared styles for all pages (matches sophiaesiegel.github.io) |
 | `checker/check.py` | The data-checker (Python standard library only) |
-| `checker/florida.py` | Florida part of the checker: FDACS daily status pages + NOAA respiratory forecast |
+| `checker/florida.py` | Florida part of the checker: FDACS daily status pages |
 | `.github/workflows/check.yml` | Tells GitHub to run the checker every 3 hours |
 | `data/` | Written by the checker: advisory history, current advisories, daily C-HARM values at 9 pier sites |
 | `TUTORIAL-7-DAY-TREND.md` | Step-by-step: add a 7-day trend chart yourself |
@@ -37,10 +37,9 @@ python checker/check.py
 | Harvest area open/closed + reason | FDACS daily status pages (5 regions) | Data-checker reads the pages → `data/florida_shellfish.json`; history in `data/florida_shellfish_history.csv` |
 | Harvest area shapes | FDACS "Temporary Closures" ArcGIS layer | Live from the browser |
 | *K. brevis* samples (8 days) | FWC HAB dashboard ArcGIS layer | Live from the browser |
-| Beach respiratory forecast | NOAA NCCOS (zip of CSVs) | Data-checker → `data/florida_respiratory.json` |
 | Chlorophyll fluorescence | MODIS Aqua nFLH, NOAA CoastWatch ERDDAP | Live (images + JSONP) |
 
-Florida alerts fire when an area closes or reopens for an algal toxin, or a beach newly reaches Moderate/High respiratory risk.
+Florida alerts fire when a harvesting area closes or reopens because of an algal toxin. Rain, seasonal and water-quality closures are logged in the history but not alerted.
 
 ## What's inside `california.html`
 
@@ -107,7 +106,7 @@ Note: GitHub pauses scheduled workflows on public repos after 60 days with no re
 - Chart `data/charm_daily.csv` once a few weeks have accumulated
 
 ### Later
-- **Saved beaches + personal alerts:** user accounts (Supabase or Firebase), so people get alerts for *their* beaches instead of one repo-wide feed.
+- **Saved beaches + personal alerts:** user accounts (Supabase or Firebase), so people get alerts for *their* harvesting spots instead of one repo-wide feed.
 - **Phone app:** first a **PWA** (installable web app: add a manifest and service worker; a few hours of work). Then **React Native + Expo** if people use it.
 - **B2B shellfish tag logging:** restaurants scan tags, keep them the required 90 days, and get alerts if a harvest area is closed after the fact. Needs accounts, a database and OCR/barcode scanning.
 
