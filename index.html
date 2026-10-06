@@ -95,13 +95,19 @@ a:hover { text-decoration: underline; text-underline-offset: 3px; }
 }
 .close:hover { color: var(--text); border-color: var(--accent); }
 
+/* ---------- phones: map on top, everything else scrolls below it ---------- */
 @media (max-width: 820px) {
-  .layout { grid-template-columns: 1fr; grid-template-rows: auto auto; }
-  .map-wrap { grid-row: 1; }
-  #map { position: relative; height: 52vh; }
-  #forecast { position: static; width: auto; max-height: none; margin: 12px 16px 0; backdrop-filter: none; }
-  #panel { grid-row: 2; border-right: 0; border-top: 1px solid var(--border-soft); overflow: visible; }
-  .eyebrow { margin-left: 0; }
+  html, body { height: auto; min-height: 100%; }
+  .layout { flex: none; display: flex; flex-direction: column; }
+  .map-wrap { order: -1; min-height: 0; height: 52vh; }
+  .eyebrow-long { display: none; }
+  #map { position: absolute; inset: 0; }
+  /* On phones the forecast panel is moved into the side panel, under the result (see moveForecastPanel) */
+  #forecast { position: static; width: auto; max-height: none; backdrop-filter: none; box-shadow: none; background: var(--panel); }
+  #panel { border-right: 0; border-top: 1px solid var(--border-soft); overflow: visible; padding: 14px; }
+  .site-header { padding: 10px 14px; min-height: 0; gap: 8px 12px; }
+  .brand-sub { display: none; }
+  .eyebrow { margin-left: auto; font-size: 10px; letter-spacing: 0.08em; padding: 3px 9px; }
 }
 
 /* ---------- cards & type ---------- */
@@ -178,13 +184,17 @@ details p { font-size: 13px; color: var(--text-dim); white-space: pre-line; marg
 .overlay-ctl select { width: 100%; font: inherit; font-size: 13px; padding: 5px 8px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-2); color: var(--text); }
 .legend-bar { height: 8px; border-radius: 99px; margin-top: 10px; background: linear-gradient(90deg, #06253d, #41349e, #804e8f, #cc6871, #fca63c, #eaf357); }
 .legend-labels { display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: 10px; color: var(--text-faint); margin-top: 3px; }
-@media (max-width: 820px) { .overlay-ctl { width: 175px; padding: 9px 11px; font-size: 12px; } }
+@media (max-width: 820px) {
+  .overlay-ctl { width: 160px; padding: 8px 10px; font-size: 12px; }
+  .overlay-ctl label { display: none; }
+  .overlay-ctl select { margin-top: 5px; font-size: 12px; padding: 4px 6px; }
+}
 </style>
 </head>
 <body>
 <header class="site-header">
   <div class="brand"><span class="brand-mark" aria-hidden="true"></span>Shore Check <span class="brand-sub">California shellfish &amp; HAB risk</span></div>
-  <span class="eyebrow">Prototype · not for safety decisions</span>
+  <span class="eyebrow">Prototype<span class="eyebrow-long"> · not for safety decisions</span></span>
 </header>
 
 <div class="layout">
@@ -712,7 +722,7 @@ async function checkSpot(lat, lng) {
 
   // --- C-HARM forecast: shown in the floating panel on the map ---
   card.append(el('p', { class: 'small faint', style: 'margin:14px 0 0' },
-    window.innerWidth <= 820 ? 'The C-HARM forecast for this spot is above, under the map.' : 'The C-HARM forecast for this spot is in the panel on the map →'));
+    window.innerWidth <= 820 ? 'The C-HARM forecast for this spot is just below ↓' : 'The C-HARM forecast for this spot is in the panel on the map →'));
 
   const fp = document.getElementById('forecast');
   const closeBtn = el('button', { class: 'close', 'aria-label': 'Close forecast' }, '×');
@@ -806,6 +816,17 @@ document.getElementById('locate').onclick = () => {
 /* =====================================================================
    8. START
    ===================================================================== */
+
+// Phones: put the forecast panel in the side panel, right under the tapped spot's
+// result. Laptops: keep it floating over the map. Re-checks if the window is resized.
+const phone = matchMedia('(max-width: 820px)');
+function moveForecastPanel() {
+  const fp = document.getElementById('forecast');
+  if (phone.matches) document.getElementById('result').after(fp);
+  else document.querySelector('.map-wrap').append(fp);
+}
+phone.addEventListener('change', moveForecastPanel);
+moveForecastPanel();
 
 (async () => {
   try {
