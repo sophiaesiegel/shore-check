@@ -1,0 +1,1272 @@
+{
+ "checked_at": "2026-10-06T00:19Z",
+ "published": {
+  "Atlantic": "12:00 PM EST September 30th, 2026",
+  "West Gulf": "2:45 PM CST October 5th, 2026",
+  "Central Gulf": "09:30 AM October 5th, 2026",
+  "Big Bend Gulf": "1:30 PM EDT October 1, 2026",
+  "South Gulf": "8:30 AM October 2nd, 2026"
+ },
+ "areas": {
+  "7001": {
+   "id": "7001",
+   "region": "Atlantic",
+   "name": "Indian River/St. Lucie",
+   "classification": "Approved",
+   "lines": [
+    {
+     "status": "OPEN",
+     "date": "10/31/2024",
+     "reason": ""
+    }
+   ],
+   "state": "open",
+   "biotoxin": false
+  },
+  "7005": {
+   "id": "7005",
+   "region": "Atlantic",
+   "name": "Indian River/St. Lucie",
+   "classification": "Restricted",
+   "lines": [
+    {
+     "status": "CLOSED",
+     "date": "Year Round",
+     "reason": ""
+    }
+   ],
+   "state": "closed",
+   "biotoxin": false
+  },
+  "7202": {
+   "id": "7202",
+   "region": "Atlantic",
+   "name": "North Indian River",
+   "classification": "Conditionally Approved",
+   "lines": [
+    {
+     "status": "OPEN",
+     "date": "6/11/2026",
+     "reason": ""
+    }
+   ],
+   "state": "open",
+   "biotoxin": false
+  },
+  "7412": {
+   "id": "7412",
+   "region": "Atlantic",
+   "name": "Body F",
+   "classification": "Conditionally Approved",
+   "lines": [
+    {
+     "status": "OPEN",
+     "date": "5/30/2026",
+     "reason": ""
+    }
+   ],
+   "state": "open",
+   "biotoxin": false
+  },
+  "7506": {
+   "id": "7506",
+   "region": "Atlantic",
+   "name": "Body E",
+   "classification": "Conditionally Restricted",
+   "lines": [
+    {
+     "status": "CLOSED",
+     "date": "Year Round",
+     "reason": ""
+    }
+   ],
+   "state": "closed",
+   "biotoxin": false
+  },
+  "7602": {
+   "id": "7602",
+   "region": "Atlantic",
+   "name": "Body D",
+   "classification": "Conditionally Approved",
+   "lines": [
+    {
+     "status": "CLOSED",
+     "date": "Year Round",
+     "reason": "ADMINISTRATIVE"
+    }
+   ],
+   "state": "closed",
+   "biotoxin": false
+  },
+  "7712": {
+   "id": "7712",
+   "region": "Atlantic",
+   "name": "Body C Zone 1 Spring/Summer/Fall (March-Nov)",
+   "classification": "Conditionally Approved",
+   "lines": [
+    {
+     "status": "CLOSED",
+     "date": "Year Round",
+     "reason": "ADMINISTRATIVE"
+    }
+   ],
+   "state": "closed",
+   "biotoxin": false
+  },
+  "7716": {
+   "id": "7716",
+   "region": "Atlantic",
+   "name": "Body C Winter (December-February)",
+   "classification": "Conditionally Restricted",
+   "lines": [
+    {
+     "status": "CLOSED",
+     "date": "Year Round",
+     "reason": ""
+    }
+   ],
+   "state": "closed",
+   "biotoxin": false
+  },
+  "7722": {
+   "id": "7722",
+   "region": "Atlantic",
+   "name": "Body C Zone 2 Spring/Summer/Fall (March-Nov)",
+   "classification": "Conditionally Approved",
+   "lines": [
+    {
+     "status": "CLOSED",
+     "date": "Year Round",
+     "reason": "ADMINISTRATIVE"
+    }
+   ],
+   "state": "closed",
+   "biotoxin": false
+  },
+  "7726": {
+   "id": "7726",
+   "region": "Atlantic",
+   "name": "Body C Spring/Summer/Fall (March-Nov)",
+   "classification": "Conditionally Restricted",
+   "lines": [
+    {
+     "status": "CLOSED",
+     "date": "Year Round",
+     "reason": ""
+    }
+   ],
+   "state": "closed",
+   "biotoxin": false
+  },
+  "7732": {
+   "id": "7732",
+   "region": "Atlantic",
+   "name": "Body C Winter (December-February)",
+   "classification": "Conditionally Approved",
+   "lines": [
+    {
+     "status": "CLOSED",
+     "date": "Year Round",
+     "reason": "ADMINISTRATIVE"
+    }
+   ],
+   "state": "closed",
+   "biotoxin": false
+  },
+  "7812": {
+   "id": "7812",
+   "region": "Atlantic",
+   "name": "Body B",
+   "classification": "Conditionally Approved",
+   "lines": [
+    {
+     "status": "CLOSED",
+     "date": "5/30/2026",
+     "reason": "P. bahamense"
+    }
+   ],
+   "state": "closed",
+   "biotoxin": false
+  },
+  "7902": {
+   "id": "7902",
+   "region": "Atlantic",
+   "name": "South Banana River",
+   "classification": "Conditionally Approved",
+   "lines": [
+    {
+     "status": "CLOSED",
+     "date": "Year Round",
+     "reason": "ADMINISTRATIVE"
+    }
+   ],
+   "state": "closed",
+   "biotoxin": false
+  },
+  "8001": {
+   "id": "8001",
+   "region": "Atlantic",
+   "name": "Body A",
+   "classification": "Approved",
+   "lines": [
+    {
+     "status": "CLOSED",
+     "date": "5/30/2026",
+     "reason": "P. bahamense"
+    }
+   ],
+   "state": "closed",
+   "biotoxin": false
+  },
+  "8201": {
+   "id": "8201",
+   "region": "Atlantic",
+   "name": "South Volusia",
+   "classification": "Approved",
+   "lines": [
+    {
+     "status": "CLOSED",
+     "date": "7/2/2026",
+     "reason": "P. bahamense"
+    }
+   ],
+   "state": "closed",
+   "biotoxin": false
+  },
+  "8212": {
+   "id": "8212",
+   "region": "Atlantic",
+   "name": "South Volusia Zone 1",
+   "classification": "Conditionally Approved",
+   "lines": [
+    {
+     "status": "OPEN",
+     "date": "9/3/2026",
+     "reason": "Passing FC Results"
+    }
+   ],
+   "state": "open",
+   "biotoxin": false
+  },
+  "8222": {
+   "id": "8222",
+   "region": "Atlantic",
+   "name": "South Volusia Zone 2",
+   "classification": "Conditionally Approved",
+   "lines": [
+    {
+     "status": "OPEN",
+     "date": "7/16/2026",
+     "reason": ""
+    }
+   ],
+   "state": "open",
+   "biotoxin": false
+  },
+  "8802": {
+   "id": "8802",
+   "region": "Atlantic",
+   "name": "South St. Johns",
+   "classification": "Conditionally Approved",
+   "lines": [
+    {
+     "status": "OPEN",
+     "date": "5/21/2026",
+     "reason": ""
+    }
+   ],
+   "state": "open",
+   "biotoxin": false
+  },
+  "9202": {
+   "id": "9202",
+   "region": "Atlantic",
+   "name": "North St. Johns",
+   "classification": "Conditionally Approved",
+   "lines": [
+    {
+     "status": "OPEN",
+     "date": "10/19/2025",
+     "reason": ""
+    }
+   ],
+   "state": "open",
+   "biotoxin": false
+  },
+  "9602": {
+   "id": "9602",
+   "region": "Atlantic",
+   "name": "Duval County",
+   "classification": "Conditionally Approved",
+   "lines": [
+    {
+     "status": "CLOSED OPENS at sunrise",
+     "date": "9/13/2026 10/01/2026",
+     "reason": "Rainfall Passing FC samples"
+    },
+    {
+     "status": "Tentative Sample Date",
+     "date": "Area",
+     "reason": "Results Expected"
+    },
+    {
+     "status": "9/9",
+     "date": "9202",
+     "reason": "9/11"
+    },
+    {
+     "status": "9/23",
+     "date": "9602",
+     "reason": "9/25"
+    },
+    {
+     "status": "Tentative Sample Date",
+     "date": "Area",
+     "reason": "Results Expected"
+    },
+    {
+     "status": "9/28",
+     "date": "8201, 8212, + 8222",
+     "reason": "9/29"
+    },
+    {
+     "status": "9/29",
+     "date": "9202",
+     "reason": "9/30"
+    },
+    {
+     "status": "9/30",
+     "date": "7812 + 8001",
+     "reason": "10/01"
+    }
+   ],
+   "state": "mixed",
+   "biotoxin": false
+  },
+  "0111": {
+   "id": "0111",
+   "region": "West Gulf",
+   "name": "Big Lagoon",
+   "classification": "Approved",
+   "lines": [
+    {
+     "status": "OPEN",
+     "date": "10/01/2026",
+     "reason": ""
+    }
+   ],
+   "state": "open",
+   "biotoxin": false
+  },
+  "0222": {
+   "id": "0222",
+   "region": "West Gulf",
+   "name": "Escambia Bay",
+   "classification": "Conditionally Approved",
+   "lines": [
+    {
+     "status": "Public Reefs OPEN CLOSES @ Sunset",
+     "date": "10/01/2026 10/05/2026",
+     "reason": "Rainfall Management"
+    },
+    {
+     "status": "Leases OPEN CLOSES @ Sunset",
+     "date": "09/18/2026 10/05/2026",
+     "reason": "Rainfall Management"
+    }
+   ],
+   "state": "mixed",
+   "biotoxin": false
+  },
+  "0232": {
+   "id": "0232",
+   "region": "West Gulf",
+   "name": "East Bay",
+   "classification": "Conditionally Approved",
+   "lines": [
+    {
+     "status": "Public Reefs CLOSED",
+     "date": "10/04/2026",
+     "reason": "Rainfall Management"
+    },
+    {
+     "status": "Leases CLOSED",
+     "date": "10/04/2026",
+     "reason": "Rainfall Management"
+    }
+   ],
+   "state": "closed",
+   "biotoxin": false
+  },
+  "0622": {
+   "id": "0622",
+   "region": "West Gulf",
+   "name": "Choctawhatchee Bay Central",
+   "classification": "Conditionally Approved",
+   "lines": [
+    {
+     "status": "OPEN CLOSES @ Sunset",
+     "date": "10/01/2026 10/05/2026",
+     "reason": "Rainfall Management"
+    }
+   ],
+   "state": "mixed",
+   "biotoxin": false
+  },
+  "0632": {
+   "id": "0632",
+   "region": "West Gulf",
+   "name": "Choctawhatchee Bay Eastern",
+   "classification": "Conditionally Approved",
+   "lines": [
+    {
+     "status": "CLOSED",
+     "date": "10/04/2026",
+     "reason": "Rainfall Management"
+    }
+   ],
+   "state": "closed",
+   "biotoxin": false
+  },
+  "0822": {
+   "id": "0822",
+   "region": "West Gulf",
+   "name": "West Bay",
+   "classification": "Conditionally Approved",
+   "lines": [
+    {
+     "status": "Public Reefs CLOSED",
+     "date": "10/04/2026",
+     "reason": "Rainfall Management"
+    },
+    {
+     "status": "Leases CLOSED",
+     "date": "10/04/2026",
+     "reason": "Rainfall Management"
+    }
+   ],
+   "state": "closed",
+   "biotoxin": false
+  },
+  "1012": {
+   "id": "1012",
+   "region": "West Gulf",
+   "name": "North Bay Western",
+   "classification": "Conditionally Approved",
+   "lines": [
+    {
+     "status": "CLOSED",
+     "date": "10/04/2026",
+     "reason": "Rainfall Management"
+    }
+   ],
+   "state": "closed",
+   "biotoxin": false
+  },
+  "1022": {
+   "id": "1022",
+   "region": "West Gulf",
+   "name": "North Bay Eastern",
+   "classification": "Conditionally Approved",
+   "lines": [
+    {
+     "status": "CLOSED",
+     "date": "10/04/2026",
+     "reason": "Rainfall Management"
+    }
+   ],
+   "state": "closed",
+   "biotoxin": false
+  },
+  "1212": {
+   "id": "1212",
+   "region": "West Gulf",
+   "name": "East Bay",
+   "classification": "Conditionally Approved",
+   "lines": [
+    {
+     "status": "Public Reefs OPEN",
+     "date": "10/01/2026",
+     "reason": ""
+    },
+    {
+     "status": "Leases OPEN",
+     "date": "08/09/2026",
+     "reason": ""
+    },
+    {
+     "status": "Tentative Sample Date",
+     "date": "Area",
+     "reason": "Results Expected"
+    },
+    {
+     "status": "09/22/2026",
+     "date": "1012/1022",
+     "reason": "09/24/2026"
+    },
+    {
+     "status": "09/23/2026",
+     "date": "0622",
+     "reason": "09/25/2026"
+    },
+    {
+     "status": "09/29/2026",
+     "date": "0111",
+     "reason": "10/01/2026"
+    },
+    {
+     "status": "Tentative Sample Date",
+     "date": "Area",
+     "reason": "Results Expected"
+    }
+   ],
+   "state": "open",
+   "biotoxin": false
+  },
+  "1401": {
+   "id": "1401",
+   "region": "Central Gulf",
+   "name": "St. Joe Bay",
+   "classification": "Approved",
+   "lines": [
+    {
+     "status": "CLOSED",
+     "date": "8/15/26",
+     "reason": "Pyrodinium bahamense"
+    }
+   ],
+   "state": "closed",
+   "biotoxin": true
+  },
+  "1512": {
+   "id": "1512",
+   "region": "Central Gulf",
+   "name": "Indian Lagoon Spring/Fall (March-June, October) (Leases Jul-Sep)",
+   "classification": "Conditionally Approved",
+   "lines": [
+    {
+     "status": "PUBLIC BARS CLOSED",
+     "date": "7/31/20",
+     "reason": "PER FWC"
+    },
+    {
+     "status": "LEASES Open LEASES Close at Sunset",
+     "date": "7/30/26 10/5/26",
+     "reason": "Lack of Data"
+    }
+   ],
+   "state": "mixed",
+   "biotoxin": false
+  },
+  "1542": {
+   "id": "1542",
+   "region": "Central Gulf",
+   "name": "Indian Lagoon Zone A Winter (November-February)",
+   "classification": "Conditionally Approved",
+   "lines": [
+    {
+     "status": "PUBLIC BARS CLOSED",
+     "date": "7/31/20",
+     "reason": "PER FWC"
+    },
+    {
+     "status": "LEASES Closed",
+     "date": "2/28/26",
+     "reason": "Seasonal"
+    }
+   ],
+   "state": "closed",
+   "biotoxin": false
+  },
+  "1552": {
+   "id": "1552",
+   "region": "Central Gulf",
+   "name": "Indian Lagoon Zone B Winter (November-February)",
+   "classification": "Conditionally Approved",
+   "lines": [
+    {
+     "status": "PUBLIC BARS CLOSED",
+     "date": "7/31/20",
+     "reason": "PER FWC"
+    }
+   ],
+   "state": "closed",
+   "biotoxin": false
+  },
+  "1506": {
+   "id": "1506",
+   "region": "Central Gulf",
+   "name": "Indian Lagoon",
+   "classification": "Conditionally Restricted",
+   "lines": [
+    {
+     "status": "CLOSED",
+     "date": "Year Round",
+     "reason": ""
+    }
+   ],
+   "state": "closed",
+   "biotoxin": false
+  },
+  "1601": {
+   "id": "1601",
+   "region": "Central Gulf",
+   "name": "Apalachicola Bay",
+   "classification": "Approved",
+   "lines": [
+    {
+     "status": "PUBLIC BARS CLOSED",
+     "date": "7/31/20",
+     "reason": "PER FWC"
+    },
+    {
+     "status": "LEASES Open",
+     "date": "7/30/26",
+     "reason": ""
+    }
+   ],
+   "state": "mixed",
+   "biotoxin": false
+  },
+  "1611": {
+   "id": "1611",
+   "region": "Central Gulf",
+   "name": "Apalachicola Bay",
+   "classification": "Approved",
+   "lines": [
+    {
+     "status": "PUBLIC BARS CLOSED",
+     "date": "7/31/20",
+     "reason": "PER FWC"
+    },
+    {
+     "status": "LEASES Open",
+     "date": "7/30/26",
+     "reason": ""
+    }
+   ],
+   "state": "mixed",
+   "biotoxin": false
+  },
+  "1612": {
+   "id": "1612",
+   "region": "Central Gulf",
+   "name": "Apalachicola Bay",
+   "classification": "Conditionally Approved",
+   "lines": [
+    {
+     "status": "PUBLIC BARS CLOSED",
+     "date": "7/31/20",
+     "reason": "PER FWC"
+    },
+    {
+     "status": "LEASES Open",
+     "date": "7/30/26",
+     "reason": ""
+    }
+   ],
+   "state": "mixed",
+   "biotoxin": false
+  },
+  "1622": {
+   "id": "1622",
+   "region": "Central Gulf",
+   "name": "Apalachicola Bay",
+   "classification": "Conditionally Approved",
+   "lines": [
+    {
+     "status": "PUBLIC BARS CLOSED",
+     "date": "7/31/20",
+     "reason": "PER FWC"
+    }
+   ],
+   "state": "closed",
+   "biotoxin": false
+  },
+  "1632": {
+   "id": "1632",
+   "region": "Central Gulf",
+   "name": "Apalachicola Bay",
+   "classification": "Conditionally Approved",
+   "lines": [
+    {
+     "status": "LEASE Open LEASE Closes at Sunset",
+     "date": "7/30/26 10/5/26",
+     "reason": "Rainfall Management"
+    }
+   ],
+   "state": "mixed",
+   "biotoxin": false
+  },
+  "1642": {
+   "id": "1642",
+   "region": "Central Gulf",
+   "name": "Apalachicola Bay",
+   "classification": "Conditionally Approved",
+   "lines": [
+    {
+     "status": "PUBLIC BARS Open",
+     "date": "10/1/26",
+     "reason": "Seasonal"
+    }
+   ],
+   "state": "open",
+   "biotoxin": false
+  },
+  "1672": {
+   "id": "1672",
+   "region": "Central Gulf",
+   "name": "Apalachicola Bay",
+   "classification": "Conditionally Approved",
+   "lines": [
+    {
+     "status": "PUBLIC BARS Closed",
+     "date": "9/7/26",
+     "reason": "PER FWC"
+    }
+   ],
+   "state": "closed",
+   "biotoxin": false
+  },
+  "1652": {
+   "id": "1652",
+   "region": "Central Gulf",
+   "name": "Apalachicola Bay Summer",
+   "classification": "Conditionally Approved",
+   "lines": [
+    {
+     "status": "CLOSED",
+     "date": "7/31/20",
+     "reason": "PER FWC"
+    }
+   ],
+   "state": "closed",
+   "biotoxin": false
+  },
+  "1662": {
+   "id": "1662",
+   "region": "Central Gulf",
+   "name": "Apalachicola Bay Summer",
+   "classification": "Conditionally Approved",
+   "lines": [
+    {
+     "status": "CLOSED",
+     "date": "7/31/20",
+     "reason": "PER FWC"
+    }
+   ],
+   "state": "closed",
+   "biotoxin": false
+  },
+  "1801": {
+   "id": "1801",
+   "region": "Central Gulf",
+   "name": "Alligator Harbor",
+   "classification": "Approved",
+   "lines": [
+    {
+     "status": "OPEN",
+     "date": "7/8/25",
+     "reason": ""
+    }
+   ],
+   "state": "open",
+   "biotoxin": false
+  },
+  "2002": {
+   "id": "2002",
+   "region": "Central Gulf",
+   "name": "Ochlockonee Bay (October-June)",
+   "classification": "Conditionally Approved",
+   "lines": [
+    {
+     "status": "OPEN CLOSES at Sunset",
+     "date": "10/01/26 10/5/26",
+     "reason": "Lack of Data"
+    }
+   ],
+   "state": "mixed",
+   "biotoxin": false
+  },
+  "2006": {
+   "id": "2006",
+   "region": "Central Gulf",
+   "name": "Ochlockonee Bay",
+   "classification": "Conditionally Restricted",
+   "lines": [
+    {
+     "status": "CLOSED",
+     "date": "Year Round",
+     "reason": ""
+    }
+   ],
+   "state": "closed",
+   "biotoxin": false
+  },
+  "2212": {
+   "id": "2212",
+   "region": "Central Gulf",
+   "name": "Wakulla County Zone 1 Fall/Winter/Spring (September-May)",
+   "classification": "Conditionally Approved",
+   "lines": [
+    {
+     "status": "PUBLIC BARS Closed",
+     "date": "10/4/26",
+     "reason": "Rainfall Management"
+    },
+    {
+     "status": "LEASE Closed",
+     "date": "10/4/26",
+     "reason": "Rainfall Management"
+    }
+   ],
+   "state": "closed",
+   "biotoxin": false
+  },
+  "2222": {
+   "id": "2222",
+   "region": "Central Gulf",
+   "name": "Wakulla County Zone 2 Fall/Winter/Spring (September-May)",
+   "classification": "Conditionally Approved",
+   "lines": [
+    {
+     "status": "PUBLIC BARS Open",
+     "date": "9/1/26",
+     "reason": ""
+    },
+    {
+     "status": "LEASES Open",
+     "date": "7/29/26",
+     "reason": ""
+    }
+   ],
+   "state": "open",
+   "biotoxin": false
+  },
+  "2206": {
+   "id": "2206",
+   "region": "Central Gulf",
+   "name": "Wakulla County",
+   "classification": "Conditionally Restricted",
+   "lines": [
+    {
+     "status": "CLOSED",
+     "date": "Year Round",
+     "reason": ""
+    },
+    {
+     "status": "Tentative Sample Date",
+     "date": "Area",
+     "reason": "Results Expected"
+    },
+    {
+     "status": "10/8/26",
+     "date": "1512",
+     "reason": "10/9/26"
+    },
+    {
+     "status": "10/12/26",
+     "date": "2212",
+     "reason": "10/14/26"
+    },
+    {
+     "status": "10/12/26",
+     "date": "2001",
+     "reason": "10/14/26"
+    },
+    {
+     "status": "Tentative Sample Date",
+     "date": "Area",
+     "reason": "Results Expected"
+    },
+    {
+     "status": "10/7/26",
+     "date": "14",
+     "reason": "10/8/26"
+    }
+   ],
+   "state": "closed",
+   "biotoxin": false
+  },
+  "2502": {
+   "id": "2502",
+   "region": "Big Bend Gulf",
+   "name": "Horseshoe Beach Conditionally Approved Aquaculture Use Zones (Horseshoe, Long Bar, Shired Reef, Pine Island leases)",
+   "classification": null,
+   "lines": [
+    {
+     "status": "OPEN",
+     "date": "",
+     "reason": ""
+    }
+   ],
+   "state": "open",
+   "biotoxin": false
+  },
+  "2802": {
+   "id": "2802",
+   "region": "Big Bend Gulf",
+   "name": "Suwannee Sound Spring/Summer (February-May, September)",
+   "classification": "Conditionally Approved",
+   "lines": [
+    {
+     "status": "CLOSED",
+     "date": "",
+     "reason": "Seasonal"
+    }
+   ],
+   "state": "closed",
+   "biotoxin": false
+  },
+  "2812": {
+   "id": "2812",
+   "region": "Big Bend Gulf",
+   "name": "Suwannee Sound Winter (October-January)",
+   "classification": "Conditionally Approved",
+   "lines": [
+    {
+     "status": "OPEN",
+     "date": "",
+     "reason": ""
+    }
+   ],
+   "state": "open",
+   "biotoxin": false
+  },
+  "3001": {
+   "id": "3001",
+   "region": "Big Bend Gulf",
+   "name": "Cedar Key Approved (Including Gulf Jackson, Pelican Reef and Derricks Aquaculture Use Zones)",
+   "classification": null,
+   "lines": [
+    {
+     "status": "OPEN",
+     "date": "",
+     "reason": ""
+    }
+   ],
+   "state": "open",
+   "biotoxin": false
+  },
+  "3012": {
+   "id": "3012",
+   "region": "Big Bend Gulf",
+   "name": "Cedar Key Zone A Conditionally Approved (Wild harvest areas)",
+   "classification": null,
+   "lines": [
+    {
+     "status": "OPEN",
+     "date": "",
+     "reason": ""
+    }
+   ],
+   "state": "open",
+   "biotoxin": false
+  },
+  "3022": {
+   "id": "3022",
+   "region": "Big Bend Gulf",
+   "name": "Cedar Key Zone B",
+   "classification": "Conditionally Approved",
+   "lines": [
+    {
+     "status": "OPEN",
+     "date": "",
+     "reason": ""
+    }
+   ],
+   "state": "open",
+   "biotoxin": false
+  },
+  "3202": {
+   "id": "3202",
+   "region": "Big Bend Gulf",
+   "name": "Waccasassa Bay",
+   "classification": "Conditionally Approved",
+   "lines": [
+    {
+     "status": "OPEN",
+     "date": "",
+     "reason": ""
+    }
+   ],
+   "state": "open",
+   "biotoxin": false
+  },
+  "3402": {
+   "id": "3402",
+   "region": "Big Bend Gulf",
+   "name": "Withlacoochee Bay",
+   "classification": "Conditionally Approved",
+   "lines": [
+    {
+     "status": "OPEN",
+     "date": "",
+     "reason": ""
+    }
+   ],
+   "state": "open",
+   "biotoxin": false
+  },
+  "3701": {
+   "id": "3701",
+   "region": "Big Bend Gulf",
+   "name": "Citrus County Spring/Fall (March-June, October)",
+   "classification": "Approved",
+   "lines": [
+    {
+     "status": "OPEN",
+     "date": "",
+     "reason": ""
+    }
+   ],
+   "state": "open",
+   "biotoxin": false
+  },
+  "3702": {
+   "id": "3702",
+   "region": "Big Bend Gulf",
+   "name": "Citrus County Winter (November-February)",
+   "classification": "Conditionally Approved",
+   "lines": [
+    {
+     "status": "CLOSED",
+     "date": "",
+     "reason": "Seasonal"
+    },
+    {
+     "status": "Tentative Sample Date",
+     "date": "Area",
+     "reason": "Results Expected"
+    },
+    {
+     "status": "10/5",
+     "date": "28",
+     "reason": "10/7"
+    },
+    {
+     "status": "10/6",
+     "date": "32",
+     "reason": "10/8"
+    },
+    {
+     "status": "10/7",
+     "date": "34",
+     "reason": "10/9"
+    },
+    {
+     "status": "Tentative Sample Date",
+     "date": "Area",
+     "reason": "Results Expected"
+    }
+   ],
+   "state": "closed",
+   "biotoxin": false
+  },
+  "4202": {
+   "id": "4202",
+   "region": "South Gulf",
+   "name": "Boca Ciega Bay",
+   "classification": "Conditionally Approved",
+   "lines": [
+    {
+     "status": "CLOSED",
+     "date": "Year Round",
+     "reason": "Administrative"
+    }
+   ],
+   "state": "closed",
+   "biotoxin": false
+  },
+  "4802": {
+   "id": "4802",
+   "region": "South Gulf",
+   "name": "Lower Tampa Bay",
+   "classification": "Conditionally Approved",
+   "lines": [
+    {
+     "status": "Aquaculture Leases OPEN",
+     "date": "7/24/2026",
+     "reason": ""
+    },
+    {
+     "status": "Public Reefs OPEN",
+     "date": "7/24/2026",
+     "reason": ""
+    }
+   ],
+   "state": "open",
+   "biotoxin": false
+  },
+  "5402": {
+   "id": "5402",
+   "region": "South Gulf",
+   "name": "Sarasota Bay",
+   "classification": "Conditionally Approved",
+   "lines": [
+    {
+     "status": "CLOSED",
+     "date": "10/1/2026",
+     "reason": "Precautionary HAB"
+    }
+   ],
+   "state": "closed",
+   "biotoxin": false
+  },
+  "5602": {
+   "id": "5602",
+   "region": "South Gulf",
+   "name": "Lemon Bay",
+   "classification": "Conditionally Approved",
+   "lines": [
+    {
+     "status": "OPEN",
+     "date": "8/25/2026",
+     "reason": ""
+    }
+   ],
+   "state": "open",
+   "biotoxin": false
+  },
+  "5802": {
+   "id": "5802",
+   "region": "South Gulf",
+   "name": "Gasparilla Sound",
+   "classification": "Conditionally Approved",
+   "lines": [
+    {
+     "status": "Aquaculture Leases OPEN",
+     "date": "9/11/2026",
+     "reason": ""
+    },
+    {
+     "status": "Public Reef OPEN",
+     "date": "9/11/2026",
+     "reason": ""
+    }
+   ],
+   "state": "open",
+   "biotoxin": false
+  },
+  "6002": {
+   "id": "6002",
+   "region": "South Gulf",
+   "name": "Myakka River",
+   "classification": "Conditionally Approved",
+   "lines": [
+    {
+     "status": "OPEN",
+     "date": "10/1/2026",
+     "reason": ""
+    }
+   ],
+   "state": "open",
+   "biotoxin": false
+  },
+  "6212": {
+   "id": "6212",
+   "region": "South Gulf",
+   "name": "Pine Island Section 1",
+   "classification": "Conditionally Approved",
+   "lines": [
+    {
+     "status": "Aquaculture Leases OPEN",
+     "date": "5/21/2026",
+     "reason": ""
+    },
+    {
+     "status": "Public Reef OPEN",
+     "date": "5/21/2026",
+     "reason": ""
+    }
+   ],
+   "state": "open",
+   "biotoxin": false
+  },
+  "6222": {
+   "id": "6222",
+   "region": "South Gulf",
+   "name": "Pine Island Section 2 (North Matlacha Pass)",
+   "classification": "Conditionally Approved",
+   "lines": [
+    {
+     "status": "OPEN",
+     "date": "12/06/2025",
+     "reason": ""
+    }
+   ],
+   "state": "open",
+   "biotoxin": false
+  },
+  "6232": {
+   "id": "6232",
+   "region": "South Gulf",
+   "name": "Pine Island Section 3 (South Matlacha Pass)",
+   "classification": "Conditionally Approved",
+   "lines": [
+    {
+     "status": "OPEN",
+     "date": "8/31/2025",
+     "reason": ""
+    }
+   ],
+   "state": "open",
+   "biotoxin": false
+  },
+  "6602": {
+   "id": "6602",
+   "region": "South Gulf",
+   "name": "Ten Thousand Islands",
+   "classification": "Conditionally Approved",
+   "lines": [
+    {
+     "status": "OPEN",
+     "date": "11/01/2024",
+     "reason": ""
+    },
+    {
+     "status": "Tentative Sample Date",
+     "date": "Area",
+     "reason": "Results Expected"
+    },
+    {
+     "status": "10/6",
+     "date": "54",
+     "reason": "10/8"
+    },
+    {
+     "status": "10/7",
+     "date": "56",
+     "reason": "10/9"
+    },
+    {
+     "status": "10/8",
+     "date": "58",
+     "reason": "10/10"
+    },
+    {
+     "status": "Tentative Sample Date",
+     "date": "Area",
+     "reason": "Results Expected"
+    },
+    {
+     "status": "10/6",
+     "date": "54",
+     "reason": "10/7"
+    },
+    {
+     "status": "10/7",
+     "date": "56",
+     "reason": "10/8"
+    },
+    {
+     "status": "10/8",
+     "date": "58",
+     "reason": "10/9"
+    }
+   ],
+   "state": "open",
+   "biotoxin": false
+  }
+ }
+}

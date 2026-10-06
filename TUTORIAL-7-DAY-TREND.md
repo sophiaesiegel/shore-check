@@ -4,7 +4,7 @@
 
 **You'll learn:** how ERDDAP URLs work, writing an `async` function, and drawing a simple SVG chart.
 
-**Time:** 30–60 minutes. Everything goes in `index.html`. Save after each step and refresh the browser.
+**Time:** 30–60 minutes. Everything goes in `california.html` (it was called `index.html` when this tutorial was written). Save after each step and refresh the browser.
 
 ---
 

@@ -1,0 +1,576 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Shore Check · Florida</title>
+<meta name="description" content="Prototype: Florida shellfish harvesting area status, red tide samples, NOAA beach respiratory forecast and satellite chlorophyll fluorescence in one map.">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/shore.css">
+<style>
+/* Florida-only pieces */
+.legend-bar.haline { background: linear-gradient(90deg, #2a186c, #1a4a9b, #1b6e8c, #2f9187, #56b27a, #a2cd5c, #fdef9a); }
+.key { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 4px; font-size: 12px; color: var(--text-dim); }
+.key li { display: flex; align-items: center; gap: 8px; }
+.swatch { width: 14px; height: 14px; border-radius: 3px; flex: none; border: 1.5px solid #3df5ff; }
+.dot { width: 11px; height: 11px; border-radius: 99px; flex: none; border: 1px solid rgba(255,255,255,.6); }
+.chip.mixed { color: var(--warn); background: rgba(242, 184, 75, 0.12); }
+.resp { display: grid; grid-template-columns: repeat(10, 1fr); gap: 3px; margin-top: 6px; }
+.resp div { height: 26px; border-radius: 4px; }
+.resp-labels { display: grid; grid-template-columns: repeat(10, 1fr); gap: 3px; font-family: var(--font-mono); font-size: 10px; color: var(--text-faint); text-align: center; margin-top: 3px; }
+.sample-list li { align-items: center; }
+</style>
+</head>
+<body>
+<header class="site-header">
+  <a class="brand" href="index.html"><span class="brand-mark" aria-hidden="true"></span>Shore Check <span class="brand-sub">Florida shellfish &amp; red tide</span></a>
+  <a class="region-switch" href="california.html">Switch to California →</a>
+  <span class="eyebrow">Prototype · not for safety decisions</span>
+</header>
+
+<div class="layout">
+  <aside id="panel">
+    <div id="toxin-banner"></div>
+
+    <div class="card">
+      <p class="kicker">Check a spot</p>
+      <h2>Is it safe to harvest here?</h2>
+      <p class="small dim">Tap a bay or the coast, or use your location.</p>
+      <button class="btn" id="locate">Use my location</button>
+    </div>
+
+    <div id="result"></div>
+
+    <div class="card">
+      <p class="kicker">Statewide now</p>
+      <div id="statewide" class="small dim">Loading…</div>
+    </div>
+
+    <div class="card small">
+      <p class="kicker">How this works</p>
+      <p class="dim"><strong style="color:var(--text)">Shellfish harvesting status</strong> comes from the Florida Department of Agriculture and Consumer Services (FDACS), which opens and closes each harvesting area daily. Closures happen for rainfall, water quality, season or algal toxins; only the toxin closures are about harmful algal blooms.</p>
+      <p class="dim"><strong style="color:var(--text)">Red tide samples</strong> are Florida Fish and Wildlife (FWC) water samples from the last 8 days, counting <em>Karenia brevis</em> cells.</p>
+      <p class="dim"><strong style="color:var(--text)">Beach respiratory forecast</strong> is NOAA's red tide forecast for breathing irritation at monitored beaches, every 3 hours out to 30 hours.</p>
+      <p class="dim" style="margin:0"><strong style="color:var(--text)">Satellite layer</strong> is MODIS chlorophyll fluorescence (nFLH), the signal often used to spot <em>K. brevis</em> blooms. Other algae and sediment can raise it too, and clouds leave gaps. Always check <a href="https://www.fdacs.gov/Agriculture-Industry/Aquaculture/Shellfish-Harvesting-Area-Classification/Shellfish-Harvesting-Area-Information" target="_blank" rel="noopener">FDACS</a> and <a href="https://myfwc.com/research/redtide/statewide/" target="_blank" rel="noopener">FWC</a> before harvesting.</p>
+    </div>
+  </aside>
+  <div class="map-wrap">
+    <div id="map"></div>
+    <section id="forecast" aria-live="polite" hidden></section>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<script src="https://unpkg.com/esri-leaflet@3.1.0/dist/esri-leaflet.js"></script>
+<script src="https://unpkg.com/esri-leaflet-vector@4.3.2/dist/esri-leaflet-vector.js"></script>
+<script>
+/* =====================================================================
+   1. DATA SOURCES
+   ===================================================================== */
+
+// FDACS shellfish harvesting area shapes (status in the layer is updated less
+// often, so the daily status comes from our data-checker: data/florida_shellfish.json).
+const FDACS_AREAS = 'https://services1.arcgis.com/T0NPfOCJr9tmBN93/arcgis/rest/services/ALL_AREAS_Status_Merge_view/FeatureServer/0/query?where=1%3D1&outFields=CLASS_NO,Name,Status&f=geojson&outSR=4326&maxAllowableOffset=0.0008';
+const SHELLFISH_FILE = 'data/florida_shellfish.json';
+
+// FWC red tide (Karenia brevis) samples from the last 8 days, updated daily.
+const FWC_SAMPLES = 'https://gis.myfwc.com/mapping/rest/services/Projects_FWC/HAB_forDEP_Dashboard/MapServer/0/query?where=1%3D1&outFields=LOCATION,LATITUDE,LONGITUDE,SampleDate_t,Abundance&returnGeometry=false&f=json';
+
+// NOAA beach respiratory forecast, saved by the data-checker (NOAA's zip can't be read by browsers).
+const RESPIRATORY_FILE = 'data/florida_respiratory.json';
+
+const FL_OUTLINE = 'https://services.arcgis.com/P3ePLMYs2RVChkJx/arcgis/rest/services/USA_States_Generalized_Boundaries/FeatureServer/0/query?where=STATE_ABBR%3D%27FL%27&outFields=STATE_NAME&f=geojson&outSR=4326&maxAllowableOffset=0.003';
+
+// MODIS Aqua normalized fluorescence line height (nFLH), daily, 4 km, NOAA CoastWatch ERDDAP.
+const ERDDAP = 'https://coastwatch.pfeg.noaa.gov/erddap/griddap/';
+const FLH = 'erdMH1cflh1day_R2022NRT';
+const FLH_RANGE = [0.01, 1]; // W m-2 um-1 sr-1, log scale
+// MODIS grid: cell centres at 89.97917 - k/24 (lat, descending) and -179.97917 + j/24 (lon).
+const MODIS = { lat0: 89.979166, lon0: -179.979166, step: 1 / 24 };
+const REGION = { south: 24.0, north: 31.2, west: -88.0, east: -79.5 };
+
+// FWC abundance categories (cells per litre) and their colours.
+const ABUNDANCE = [
+  { key: 'not present', label: 'Not present / background (≤1,000)', color: '#6b8299', r: 3 },
+  { key: 'very low',    label: 'Very low (1,000–10,000)',            color: '#f6d145', r: 5 },
+  { key: 'low',         label: 'Low (10,000–100,000)',               color: '#fca63c', r: 6 },
+  { key: 'medium',      label: 'Medium (100,000–1 million)',         color: '#ee5a3a', r: 7 },
+  { key: 'high',        label: 'High (> 1 million)',                 color: '#d1145a', r: 8 },
+];
+const abundanceOf = text => ABUNDANCE.find(a => (text || '').toLowerCase().startsWith(a.key)) || ABUNDANCE[0];
+
+const RESP_COLORS = { 'Very low': '#2fbfa8', 'Low': '#f6d145', 'Moderate': '#fca63c', 'High': '#ff3b2f' };
+
+// Harvest area status colours
+const AREA_STYLE = {
+  open:     { fillColor: '#2fbfa8', fillOpacity: 0.45, label: 'Open' },
+  mixed:    { fillColor: '#f2b84b', fillOpacity: 0.5,  label: 'Partly open (e.g. leases only)' },
+  closed:   { fillColor: '#8a9bb0', fillOpacity: 0.35, label: 'Closed (rain, season, water quality)' },
+  biotoxin: { fillColor: '#ff3b2f', fillOpacity: 0.7,  label: 'Closed: algal toxin' },
+  unknown:  { fillColor: '#ffffff', fillOpacity: 0.12, label: 'Status unknown' },
+};
+
+/* =====================================================================
+   2. SMALL HELPERS
+   ===================================================================== */
+
+function el(tag, attrs = {}, ...children) {
+  const node = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (k === 'class') node.className = v; else node.setAttribute(k, v);
+  }
+  for (const c of children) if (c != null) node.append(c);
+  return node;
+}
+
+function jsonp(url, timeoutMs = 25000) {
+  return new Promise((resolve, reject) => {
+    const cb = 'jsonp_' + Math.random().toString(36).slice(2);
+    const script = document.createElement('script');
+    const timer = setTimeout(() => { cleanup(); reject(new Error('timeout')); }, timeoutMs);
+    function cleanup() { clearTimeout(timer); delete window[cb]; script.remove(); }
+    window[cb] = data => { cleanup(); resolve(data); };
+    script.onerror = () => { cleanup(); reject(new Error('request failed')); };
+    script.src = url + '&.jsonp=' + cb;
+    document.head.append(script);
+  });
+}
+
+const erddapEncode = s => s.replace(/\[/g, '%5B').replace(/\]/g, '%5D').replace(/\|/g, '%7C');
+function clamp(x, a, b) { return Math.min(b, Math.max(a, x)); }
+const km = (lat1, lon1, lat2, lon2) => Math.hypot(lat2 - lat1, (lon2 - lon1) * Math.cos(lat1 * Math.PI / 180)) * 111;
+const fmtShort = d => d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', timeZone: 'UTC' });
+
+// Same colour scale as the satellite layer (ERDDAP KT_haline, log 0.01–1).
+const HALINE = ['#2a186c', '#1a4a9b', '#1b6e8c', '#2f9187', '#56b27a', '#a2cd5c', '#fdef9a'];
+function haline(v) {
+  const t = clamp((Math.log10(v) - Math.log10(FLH_RANGE[0])) / (Math.log10(FLH_RANGE[1]) - Math.log10(FLH_RANGE[0])), 0, 1);
+  return HALINE[Math.round(t * (HALINE.length - 1))];
+}
+
+function pointInRing(x, y, ring) {
+  let inside = false;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const [xi, yi] = ring[i], [xj, yj] = ring[j];
+    if ((yi > y) !== (yj > y) && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) inside = !inside;
+  }
+  return inside;
+}
+function polygonsOf(geom) {
+  return geom.type === 'Polygon' ? [geom.coordinates] : geom.type === 'MultiPolygon' ? geom.coordinates : [];
+}
+
+/* =====================================================================
+   3. LOAD DATA
+   ===================================================================== */
+
+let SHELLFISH = null;   // daily FDACS status (from the data-checker)
+let RESP = null;        // NOAA respiratory forecast (from the data-checker)
+let SAMPLES = [];       // FWC samples
+let AREAS = null;       // FDACS area shapes (GeoJSON)
+
+const baseId = classNo => String(classNo).replace(/L$/, ''); // "1512L" (leases) belongs to area 1512
+
+function areaInfo(classNo) {
+  const live = SHELLFISH?.areas?.[baseId(classNo)];
+  if (live) return { ...live, kind: live.biotoxin ? 'biotoxin' : live.state };
+  return null;
+}
+function areaKind(feature) {
+  const info = areaInfo(feature.properties.CLASS_NO);
+  if (info) return info.kind in AREA_STYLE ? info.kind : 'unknown';
+  const s = (feature.properties.Status || '').toLowerCase(); // fall back to the layer's own status
+  return s.startsWith('open') ? 'open' : s.startsWith('closed') ? 'closed' : 'unknown';
+}
+
+async function loadJSON(url) {
+  const r = await fetch(url);
+  if (!r.ok) throw new Error(url + ' ' + r.status);
+  return r.json();
+}
+
+/* =====================================================================
+   4. MAP
+   ===================================================================== */
+
+const map = L.map('map', { zoomControl: true, zoomSnap: 0.25 });
+map.fitBounds([[REGION.south + 0.3, REGION.west + 0.3], [REGION.north - 0.2, REGION.east]]);
+
+map.createPane('labels');
+map.getPane('labels').style.zIndex = 650;
+map.getPane('labels').style.pointerEvents = 'none';
+const HUMAN_GEO = { base: 'd7397603e9274052808839b70812be50', detail: '1ddbb25aa29c4811aaadd94de469856a', labels: '4a3922d6d15f405d8c2b7a448a7fbad2' };
+L.esri.Vector.vectorTileLayer(HUMAN_GEO.base, { pane: 'tilePane' }).addTo(map);
+L.esri.Vector.vectorTileLayer(HUMAN_GEO.detail, { pane: 'tilePane', opacity: 0.5 }).addTo(map);
+L.esri.Vector.vectorTileLayer(HUMAN_GEO.labels, { pane: 'labels' }).addTo(map);
+
+// Satellite layer pane (below shapes and points)
+map.createPane('sat');
+map.getPane('sat').style.zIndex = 350;
+map.getPane('sat').style.opacity = 0.85;
+map.getPane('sat').classList.add('leaflet-charm-pane'); // reuse "pixelated" rule from shore.css
+const satLayer = L.layerGroup().addTo(map);
+
+function modisLat(k) { return MODIS.lat0 - k * MODIS.step; }
+function modisLon(j) { return MODIS.lon0 + j * MODIS.step; }
+
+function drawSatellite(dateIso) {
+  satLayer.clearLayers();
+  if (!dateIso) return;
+  const kTop = Math.round((MODIS.lat0 - REGION.north) / MODIS.step);
+  const kBottom = Math.round((MODIS.lat0 - REGION.south) / MODIS.step);
+  const jW = Math.round((REGION.west - MODIS.lon0) / MODIS.step), jE = Math.round((REGION.east - MODIS.lon0) / MODIS.step);
+  const half = MODIS.step / 2, seam = 0.01;
+  for (let k0 = kTop; k0 <= kBottom; k0 += 24) { // ~1° strips keep Mercator error small
+    const k1 = Math.min(k0 + 23, kBottom);
+    const hi = modisLat(k0), lo = modisLat(k1);
+    const q = `nflh[(${dateIso})][(${hi.toFixed(5)}):(${lo.toFixed(5)})][(${modisLon(jW).toFixed(5)}):(${modisLon(jE).toFixed(5)})]` +
+      `&.colorBar=KT_haline|C|Log|${FLH_RANGE[0]}|${FLH_RANGE[1]}|`;
+    L.imageOverlay(ERDDAP + FLH + '.transparentPng?' + erddapEncode(q),
+      [[lo - half - seam, modisLon(jW) - half], [hi + half + seam, modisLon(jE) + half]], { pane: 'sat' }).addTo(satLayer);
+  }
+}
+
+// Layer control: satellite day + legend
+const SatControl = L.Control.extend({
+  onAdd() {
+    const div = el('div', { class: 'overlay-ctl' });
+    div.innerHTML = `
+      <p class="kicker">Satellite · MODIS</p>
+      <label for="sat-day">Chlorophyll fluorescence</label>
+      <select id="sat-day"><option>Loading dates…</option></select>
+      <div class="legend-bar haline"></div>
+      <div class="legend-labels"><span>low</span><span>nFLH (log)</span><span>high</span></div>
+      <p class="faint" style="font-size:11px;margin:6px 0 0">Gaps are clouds. Step back a day for a clearer view.</p>`;
+    L.DomEvent.disableClickPropagation(div);
+    return div;
+  },
+});
+new SatControl({ position: 'topright' }).addTo(map);
+
+async function initSatellite() {
+  const sel = document.getElementById('sat-day');
+  try {
+    const res = await jsonp(ERDDAP + FLH + '.json?' + erddapEncode('time[last]'));
+    const last = new Date(res.table.rows[0][0]);
+    sel.replaceChildren(...Array.from({ length: 8 }, (_, i) => {
+      const d = new Date(last.getTime() - i * 86400000);
+      const iso = d.toISOString().slice(0, 10) + 'T12:00:00Z';
+      return el('option', { value: iso }, (i === 0 ? 'Latest · ' : '') + fmtShort(d));
+    }), el('option', { value: '' }, 'Off'));
+    sel.onchange = () => drawSatellite(sel.value);
+    drawSatellite(sel.value);
+  } catch {
+    sel.replaceChildren(el('option', { value: '' }, 'Satellite data unavailable'));
+  }
+}
+
+// Legend for shapes and points (bottom-left)
+const KeyControl = L.Control.extend({
+  onAdd() {
+    const div = el('div', { class: 'overlay-ctl', style: 'width:auto;max-width:250px' });
+    const key = el('ul', { class: 'key' });
+    for (const k of ['open', 'mixed', 'closed', 'biotoxin']) {
+      key.append(el('li', {}, el('span', { class: 'swatch', style: `background:${AREA_STYLE[k].fillColor}` }), AREA_STYLE[k].label));
+    }
+    const dots = el('ul', { class: 'key' });
+    for (const a of ABUNDANCE) dots.append(el('li', {}, el('span', { class: 'dot', style: `background:${a.color}` }), a.label));
+    const beaches = el('ul', { class: 'key' });
+    for (const [level, color] of Object.entries(RESP_COLORS)) {
+      beaches.append(el('li', {}, el('span', { class: 'dot', style: `background:${color};border-radius:2px;transform:rotate(45deg)` }), level));
+    }
+    // Collapsible, and starts closed when the map is small
+    const details = el('details', { style: 'margin:0' }, el('summary', { class: 'kicker', style: 'margin:0' }, 'Map key'),
+      el('p', { class: 'kicker', style: 'margin-top:10px' }, 'Harvest areas · FDACS'), key,
+      el('p', { class: 'kicker', style: 'margin-top:10px' }, 'K. brevis samples · FWC'), dots,
+      el('p', { class: 'kicker', style: 'margin-top:10px' }, 'Beach respiratory risk · NOAA'), beaches);
+    if (map.getSize().y > 760) details.open = true;
+    div.append(details);
+    L.DomEvent.disableClickPropagation(div);
+    return div;
+  },
+});
+
+async function loadOutline() {
+  const gj = await loadJSON(FL_OUTLINE);
+  const outline = L.geoJSON(gj, { style: { color: '#ffffff', weight: 2, opacity: 0.9, fill: false }, interactive: false });
+  // The outline is simplified, so hide it when zoomed in close to the coast.
+  const toggle = () => (map.getZoom() <= 8 ? outline.addTo(map) : outline.remove());
+  map.on('zoomend', toggle);
+  toggle();
+}
+
+async function loadAreas() {
+  AREAS = await loadJSON(FDACS_AREAS);
+  // Toxin closures drawn last so they sit on top
+  const order = { unknown: 0, open: 1, closed: 2, mixed: 3, biotoxin: 4 };
+  AREAS.features.sort((a, b) => order[areaKind(a)] - order[areaKind(b)]);
+  L.geoJSON(AREAS, {
+    interactive: false,
+    style: f => ({ className: 'county', color: '#3df5ff', weight: 1.6, opacity: 1, ...AREA_STYLE[areaKind(f)] }),
+  }).addTo(map);
+}
+
+async function loadSamples() {
+  const res = await loadJSON(FWC_SAMPLES);
+  SAMPLES = (res.features || []).map(f => f.attributes).map(a => ({
+    name: a.LOCATION, lat: a.LATITUDE, lon: a.LONGITUDE, date: (a.SampleDate_t || '').trim(), abundance: abundanceOf(a.Abundance),
+  }));
+  // Draw low counts first so blooms sit on top
+  for (const s of SAMPLES.slice().sort((a, b) => ABUNDANCE.indexOf(a.abundance) - ABUNDANCE.indexOf(b.abundance))) {
+    L.circleMarker([s.lat, s.lon], { radius: s.abundance.r, color: '#05090f', weight: 1, fillColor: s.abundance.color, fillOpacity: 0.95 })
+      .bindTooltip(`${s.name}<br>${s.date} · ${s.abundance.label}`).addTo(map);
+  }
+}
+
+function worstResp(b, n = 8) {
+  const levels = ['Very low', 'Low', 'Moderate', 'High'];
+  return b.forecast.slice(0, n).reduce((w, f) => levels.indexOf(f.level) > levels.indexOf(w) ? f.level : w, 'Very low');
+}
+
+function drawBeaches() {
+  for (const b of RESP?.beaches || []) {
+    const level = worstResp(b);
+    L.marker([b.lat, b.lon], {
+      icon: L.divIcon({ className: '', iconSize: [14, 14], html: `<div style="width:12px;height:12px;transform:rotate(45deg);background:${RESP_COLORS[level]};border:1.5px solid #fff"></div>` }),
+    }).bindTooltip(`${b.name}<br>Respiratory risk (next 24 h): ${level}`).addTo(map);
+  }
+}
+
+/* =====================================================================
+   5. STATEWIDE SUMMARY
+   ===================================================================== */
+
+function renderStatewide() {
+  const box = document.getElementById('statewide');
+  box.replaceChildren();
+  const list = el('ul', { class: 'rows' });
+
+  if (SHELLFISH) {
+    const areas = Object.values(SHELLFISH.areas);
+    const count = k => areas.filter(a => (a.biotoxin ? 'biotoxin' : a.state) === k).length;
+    list.append(el('li', {}, el('span', { style: 'color:var(--text)' }, 'Shellfish harvesting areas'),
+      el('span', { class: 'why' }, `${count('open')} open · ${count('mixed')} partly open · ${count('closed')} closed · ${count('biotoxin')} closed for algal toxins`)));
+    const tox = areas.filter(a => a.biotoxin);
+    const banner = document.getElementById('toxin-banner');
+    if (tox.length) {
+      banner.replaceChildren(el('div', { class: 'banner' },
+        el('strong', {}, 'Closed for algal toxins: '),
+        tox.map(a => `${a.name} (area ${a.id}: ${a.lines.map(l => l.reason).filter(Boolean).join(', ')})`).join('; ') + '.'));
+    }
+  } else {
+    list.append(el('li', {}, el('span', {}, 'Shellfish harvesting areas'), el('span', { class: 'why' }, 'Daily status not loaded yet (run the data-checker)')));
+  }
+
+  if (SAMPLES.length) {
+    const worst = SAMPLES.reduce((w, s) => ABUNDANCE.indexOf(s.abundance) > ABUNDANCE.indexOf(w) ? s.abundance : w, ABUNDANCE[0]);
+    const elevated = SAMPLES.filter(s => ABUNDANCE.indexOf(s.abundance) >= 2).length;
+    list.append(el('li', {}, el('span', { style: 'color:var(--text)' }, 'Red tide samples (8 days)'),
+      el('span', { class: 'why' }, `${SAMPLES.length} samples · highest: ${worst.label.split(' (')[0].toLowerCase()} · ${elevated} at low or above`)));
+  }
+
+  if (RESP) {
+    const risky = RESP.beaches.filter(b => ['Moderate', 'High'].includes(worstResp(b)));
+    list.append(el('li', {}, el('span', { style: 'color:var(--text)' }, 'Beach respiratory forecast'),
+      el('span', { class: 'why' }, `${RESP.beaches.length} beaches · ${risky.length ? risky.length + ' at moderate or high' : 'none above low'}`)));
+  }
+  box.append(list);
+  if (SHELLFISH) {
+    box.append(el('p', { class: 'mono faint', style: 'margin:10px 0 0' }, `Data-checker last ran ${new Date(SHELLFISH.checked_at).toLocaleString()}`));
+  }
+}
+
+/* =====================================================================
+   6. CHECK ONE SPOT
+   ===================================================================== */
+
+function findAreaAt(lat, lng) {
+  if (!AREAS) return null;
+  let best = null, bestD = Infinity;
+  for (const f of AREAS.features) {
+    for (const poly of polygonsOf(f.geometry)) {
+      if (pointInRing(lng, lat, poly[0]) && !poly.slice(1).some(h => pointInRing(lng, lat, h))) return { feature: f, km: 0 };
+      for (const [x, y] of poly[0]) {
+        const d = km(lat, lng, y, x);
+        if (d < bestD) { bestD = d; best = f; }
+      }
+    }
+  }
+  return bestD < 8 ? { feature: best, km: Math.round(bestD) } : null;
+}
+
+// Daily nFLH around a point (±~10 km box, averaged), for the past `days` days.
+async function flhTrend(lat, lng, days = 14) {
+  const start = new Date(Date.now() - days * 86400000).toISOString().slice(0, 10) + 'T12:00:00Z';
+  const d = 0.1;
+  const q = `nflh[(${start}):(last)][(${(lat + d).toFixed(3)}):(${(lat - d).toFixed(3)})][(${(lng - d).toFixed(3)}):(${(lng + d).toFixed(3)})]`;
+  const res = await jsonp(ERDDAP + FLH + '.json?' + erddapEncode(q));
+  const byDay = {};
+  for (const [time, , , v] of res.table.rows) {
+    (byDay[time] ||= []);
+    if (v != null && v > 0) byDay[time].push(v);
+  }
+  return Object.entries(byDay).sort().map(([time, vs]) => ({ time, v: vs.length ? vs.reduce((a, b) => a + b) / vs.length : null }));
+}
+
+// Line chart for nFLH on a log scale; cloudy days show as gaps.
+function flhChart(points) {
+  const W = 340, H = 110, pad = 22;
+  const [lo, hi] = FLH_RANGE.map(Math.log10);
+  const x = i => pad + (i * (W - 2 * pad)) / Math.max(1, points.length - 1);
+  const y = v => H - pad - ((clamp(Math.log10(v), lo, hi) - lo) / (hi - lo)) * (H - 2 * pad);
+  const NS = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(NS, 'svg');
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  svg.style.width = '100%';
+  const add = (tag, attrs) => {
+    const n = document.createElementNS(NS, tag);
+    for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, v);
+    svg.append(n);
+    return n;
+  };
+  for (const v of [0.01, 0.1, 1]) {
+    add('line', { x1: pad, x2: W - pad, y1: y(v), y2: y(v), stroke: '#16283a' });
+    add('text', { x: 2, y: y(v) + 3, 'font-size': 9, fill: '#6b8299' }).textContent = v;
+  }
+  let seg = [];
+  const flush = () => { if (seg.length > 1) add('polyline', { points: seg.join(' '), fill: 'none', stroke: '#5ad7e8', 'stroke-width': 2 }); seg = []; };
+  points.forEach((d, i) => { if (d.v == null) flush(); else seg.push(`${x(i)},${y(d.v)}`); });
+  flush();
+  points.forEach((d, i) => {
+    if (d.v == null) add('text', { x: x(i), y: H - pad + 2, 'text-anchor': 'middle', 'font-size': 9, fill: '#3a5873' }).textContent = '·';
+    else add('circle', { cx: x(i), cy: y(d.v), r: 4, fill: haline(d.v), stroke: '#05090f' });
+    if ((points.length - 1 - i) % 3 === 0) {
+      add('text', { x: x(i), y: H - 4, 'text-anchor': 'middle', 'font-size': 10, fill: '#6b8299' }).textContent = fmtShort(new Date(d.time));
+    }
+  });
+  return svg;
+}
+
+let marker = null, checkCount = 0;
+
+async function checkSpot(lat, lng) {
+  const thisCheck = ++checkCount;
+  if (marker) marker.remove();
+  marker = L.circleMarker([lat, lng], { radius: 8, color: '#5ad7e8', weight: 3, fillColor: '#05090f', fillOpacity: 1 }).addTo(map);
+
+  // ---- Left panel: official harvest area status ----
+  const out = document.getElementById('result');
+  const card = el('div', { class: 'card' });
+  out.replaceChildren(card);
+  if (window.innerWidth <= 820) card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  const hit = findAreaAt(lat, lng);
+  card.append(el('p', { class: 'kicker' }, 'Shellfish harvesting · FDACS'));
+  if (!hit) {
+    card.append(el('h2', {}, 'Not in a harvesting area'),
+      el('p', { class: 'small dim' }, 'Shellfish harvest is only allowed in FDACS-classified areas that are open. Tap inside one of the outlined bays.'));
+  } else {
+    const f = hit.feature, info = areaInfo(f.properties.CLASS_NO);
+    const kind = areaKind(f);
+    card.append(el('h2', {}, info?.name || f.properties.Name),
+      el('div', { class: 'mono faint' }, `Area ${baseId(f.properties.CLASS_NO)}${info?.classification ? ' · ' + info.classification : ''}${hit.km ? ` · ${hit.km} km away` : ''}`));
+    const chipClass = kind === 'open' ? 'none' : kind === 'mixed' ? 'mixed' : 'no';
+    card.append(el('p', { style: 'margin:10px 0 4px' }, el('span', { class: 'chip ' + chipClass }, AREA_STYLE[kind].label)));
+    if (info) {
+      const lines = el('ul', { class: 'rows' });
+      for (const l of info.lines) {
+        lines.append(el('li', {}, el('span', {}, l.status), el('span', { class: 'why' }, [l.date, l.reason].filter(Boolean).join(' · '))));
+      }
+      card.append(lines,
+        el('p', { class: 'small faint', style: 'margin:8px 0 0' }, `FDACS ${info.region} status, published ${SHELLFISH.published?.[info.region] || 'recently'}. Closures take effect at sunset, reopenings at sunrise.`));
+    } else {
+      card.append(el('p', { class: 'small faint' }, 'Daily status not available; showing the FDACS map layer status, which may be out of date.'));
+    }
+  }
+
+  // ---- Right panel: red tide conditions nearby ----
+  const fp = document.getElementById('forecast');
+  const closeBtn = el('button', { class: 'close', 'aria-label': 'Close' }, '×');
+  closeBtn.onclick = () => { fp.hidden = true; };
+  fp.replaceChildren(closeBtn, el('p', { class: 'kicker' }, 'Red tide nearby'));
+  fp.hidden = false;
+  if (window.innerWidth > 820) {
+    const panel = fp.getBoundingClientRect(), box = map.getContainer().getBoundingClientRect();
+    const pt = map.latLngToContainerPoint([lat, lng]);
+    if (pt.x + box.left > panel.left - 24 && pt.y + box.top > box.top + 260) map.panBy([pt.x + box.left - (panel.left - 80), 0]);
+  }
+
+  // Respiratory forecast at the nearest monitored beach
+  const beach = (RESP?.beaches || []).map(b => ({ ...b, km: km(lat, lng, b.lat, b.lon) })).sort((a, b) => a.km - b.km)[0];
+  if (beach && beach.km < 40) {
+    const strip = el('div', { class: 'resp' }), labels = el('div', { class: 'resp-labels' });
+    for (const f of beach.forecast.slice(0, 10)) {
+      strip.append(el('div', { style: `background:${RESP_COLORS[f.level] || '#3a5873'}`, title: `+${f.hours} h: ${f.level}` }));
+      labels.append(el('span', {}, f.hours % 6 === 0 ? `+${f.hours}h` : ''));
+    }
+    fp.append(el('p', { class: 'kicker sub' }, 'Beach respiratory forecast · NOAA'),
+      el('div', { class: 'small', style: 'color:var(--text)' }, `${beach.name} · ${Math.round(beach.km)} km`),
+      strip, labels,
+      el('p', { class: 'small faint', style: 'margin:6px 0 0' }, `Next 24 h: ${worstResp(beach)}. Very low · Low · Moderate · High = teal · yellow · orange · red.`));
+  } else {
+    fp.append(el('p', { class: 'small faint' }, 'No NOAA beach respiratory forecast within 40 km. NOAA only forecasts beaches with recent samples.'));
+  }
+
+  // Nearest FWC samples
+  const near = SAMPLES.map(s => ({ ...s, km: km(lat, lng, s.lat, s.lon) })).filter(s => s.km < 30).sort((a, b) => a.km - b.km).slice(0, 4);
+  fp.append(el('p', { class: 'kicker sub' }, 'Red tide samples · FWC, last 8 days'));
+  if (near.length) {
+    const list = el('ul', { class: 'rows sample-list' });
+    for (const s of near) {
+      list.append(el('li', {},
+        el('span', { class: 'small' }, `${s.name}`, el('div', { class: 'why', style: 'text-align:left' }, `${s.date} · ${Math.round(s.km)} km`)),
+        el('span', { class: 'chip', style: `color:#05090f;background:${s.abundance.color}` }, s.abundance.label.split(' (')[0])));
+    }
+    fp.append(list);
+  } else {
+    fp.append(el('p', { class: 'small faint' }, 'No FWC samples within 30 km in the last 8 days.'));
+  }
+
+  // Satellite fluorescence trend
+  const trendBox = el('div', { class: 'small faint' }, 'Loading satellite data…');
+  fp.append(el('p', { class: 'kicker sub' }, 'Chlorophyll fluorescence · MODIS, 14 days'), trendBox);
+  try {
+    const pts = await flhTrend(lat, lng);
+    if (thisCheck !== checkCount) return;
+    trendBox.replaceChildren(pts.some(p => p.v != null)
+      ? flhChart(pts)
+      : 'Clouds covered this spot every day for the last 14 days (or it is on land).');
+    trendBox.append(el('details', {}, el('summary', {}, 'About this number'),
+      el('p', {}, 'Normalized fluorescence line height (nFLH): light re-emitted by chlorophyll, averaged over ~10 km around your tap. Red tide blooms often raise it, but so can other algae and some sediment, so treat it as a clue, not a red tide measurement. Gaps are cloudy days.')));
+  } catch {
+    trendBox.replaceChildren('Couldn\'t load satellite data.');
+  }
+}
+
+map.on('click', e => checkSpot(e.latlng.lat, e.latlng.lng));
+
+document.getElementById('locate').onclick = () => {
+  if (!navigator.geolocation) return alert('Location is not available in this browser.');
+  navigator.geolocation.getCurrentPosition(
+    pos => { const { latitude: la, longitude: lo } = pos.coords; map.setView([la, lo], 10); checkSpot(la, lo); },
+    () => alert('Couldn\'t get your location. Tap the map instead.'));
+};
+
+/* =====================================================================
+   7. START
+   ===================================================================== */
+
+(async () => {
+  initSatellite();
+  const [shell, resp] = await Promise.allSettled([loadJSON(SHELLFISH_FILE), loadJSON(RESPIRATORY_FILE)]);
+  if (shell.status === 'fulfilled') SHELLFISH = shell.value;
+  if (resp.status === 'fulfilled') RESP = resp.value;
+  await Promise.allSettled([loadOutline(), loadAreas(), loadSamples().catch(err => console.error('FWC samples', err))]);
+  drawBeaches();
+  new KeyControl({ position: 'bottomleft' }).addTo(map);
+  renderStatewide();
+})();
+</script>
+</body>
+</html>

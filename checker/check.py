@@ -30,6 +30,8 @@ from datetime import datetime, timezone
 from html import unescape
 from pathlib import Path
 
+import florida  # checker/florida.py
+
 ROOT = Path(__file__).resolve().parent.parent
 DATA = ROOT / "data"
 
@@ -271,6 +273,11 @@ def main():
 
     print("Checking C-HARM…")
     alerts += update_charm(now)
+
+    try:
+        alerts += florida.update(now)
+    except Exception as err:
+        alerts.append(f"Florida check failed ({err}).")
 
     send_alerts(alerts)
 
