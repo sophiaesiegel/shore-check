@@ -4,65 +4,822 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Shore Check</title>
-<meta name="description" content="Harmful algal bloom and shellfish safety maps for California and Florida, combining official advisories with satellite-based forecasts.">
+<meta name="description" content="Prototype: California shellfish advisories (CDPH) plus C-HARM domoic acid forecasts in one map.">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/shore.css">
 <style>
-body { display: block; min-height: 100%; }
-body::before {
-  content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 0;
-  background:
-    radial-gradient(900px 500px at 12% -8%, rgba(47, 191, 168, 0.12), transparent 70%),
-    radial-gradient(800px 520px at 88% 4%, rgba(111, 140, 255, 0.12), transparent 70%);
+/* ---------- Design tokens: matched to sophiaesiegel.github.io ---------- */
+:root {
+  --bg:          #05090f;
+  --bg-2:        #0a121c;
+  --panel:       #0d1826;
+  --panel-2:     #112234;
+  --border:      #1c3348;
+  --border-soft: #16283a;
+
+  --text:        #dfeaf3;
+  --text-dim:    #9db2c4;
+  --text-faint:  #6b8299;
+
+  --accent:      #5ad7e8;   /* cyan   */
+  --accent-2:    #6f8cff;   /* indigo */
+  --accent-3:    #2fbfa8;   /* teal   */
+  --accent-glow: rgba(90, 215, 232, 0.16);
+
+  --danger:      #ff7a6b;
+  --danger-soft: rgba(255, 122, 107, 0.12);
+  --warn:        #f2b84b;
+
+  --radius: 14px; --radius-sm: 8px;
+  --shadow: 0 18px 40px rgba(0, 0, 0, 0.55);
+  --font-sans: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", "Cascadia Code", ui-monospace, Consolas, monospace;
+  color-scheme: dark;
 }
-.landing { position: relative; z-index: 1; max-width: 1040px; margin: 0 auto; padding: clamp(48px, 9vw, 110px) 24px 48px; }
-.landing h1 { font-size: clamp(2.4rem, 6vw, 3.8rem); font-weight: 700; letter-spacing: -0.03em; line-height: 1.05; margin: 0 0 14px; }
-.lede { font-size: clamp(1.02rem, 1.7vw, 1.18rem); color: var(--text-dim); max-width: 60ch; margin: 0 0 40px; }
-.regions { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 22px; }
-.region {
-  display: flex; flex-direction: column; gap: 10px; color: var(--text);
-  background: var(--panel); border: 1px solid var(--border-soft); border-radius: var(--radius);
-  padding: 26px 26px 24px; transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease;
+
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body {
+  background: var(--bg); color: var(--text);
+  font: 15px/1.6 var(--font-sans); -webkit-font-smoothing: antialiased;
+  display: flex; flex-direction: column;
 }
-.region:hover { transform: translateY(-4px); border-color: var(--accent); box-shadow: var(--shadow); text-decoration: none; }
-.region h2 { font-size: 1.7rem; font-weight: 650; letter-spacing: -0.02em; margin: 0; }
-.region .desc { color: var(--text-dim); font-size: 15px; margin: 0; }
-.region ul { list-style: none; margin: 6px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
-.region li { font-family: var(--font-mono); font-size: 11px; color: var(--accent-3); background: rgba(47, 191, 168, 0.09); padding: 3px 9px; border-radius: 999px; }
-.region .go { margin-top: auto; padding-top: 12px; font-weight: 600; color: var(--accent); }
-.region .go::after { content: " \2192"; }
-.toxin { font-family: var(--font-mono); font-size: 12px; color: var(--text-faint); }
-.foot { margin-top: 40px; font-size: 13px; color: var(--text-faint); max-width: 70ch; }
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; text-underline-offset: 3px; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
+
+/* ---------- header ---------- */
+.site-header {
+  display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  padding: 12px 20px; min-height: 62px;
+  background: rgba(5, 9, 15, 0.92); border-bottom: 1px solid var(--border-soft);
+}
+.brand { display: flex; align-items: center; gap: 11px; font-weight: 650; font-size: 17px; letter-spacing: -0.01em; }
+.brand-mark {
+  width: 24px; height: 24px; flex: 0 0 24px; border-radius: 6px;
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-3) 48%, var(--accent-2) 100%);
+  box-shadow: 0 0 20px var(--accent-glow);
+}
+.brand-sub { color: var(--text-faint); font-weight: 450; font-size: 13px; }
+.eyebrow {
+  margin-left: auto;
+  font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--warn); padding: 4px 11px; border: 1px solid var(--border); border-radius: 999px; background: var(--panel);
+}
+
+/* ---------- layout ---------- */
+.layout { flex: 1; display: grid; grid-template-columns: 420px 1fr; min-height: 0; }
+#panel {
+  overflow-y: auto; padding: 18px; display: flex; flex-direction: column; gap: 14px;
+  border-right: 1px solid var(--border-soft); background: var(--bg-2);
+}
+.map-wrap { position: relative; min-height: 0; }
+#map { position: absolute; inset: 0; background: #000; }
+
+/* Forecast panel: floats over the bottom-right of the map on desktop */
+#forecast {
+  position: absolute; right: 16px; bottom: 30px; z-index: 1000; width: 390px;
+  max-height: calc(100% - 290px); overflow-y: auto;
+  background: rgba(13, 24, 38, 0.95); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 14px 16px; box-shadow: var(--shadow); backdrop-filter: blur(8px);
+}
+#forecast[hidden] { display: none; }
+#forecast .kicker { margin-top: 0; }
+#forecast .kicker.sub { margin-top: 14px; }
+.close {
+  float: right; margin: -4px -4px 0 8px; width: 28px; height: 28px; border-radius: 999px; cursor: pointer;
+  border: 1px solid var(--border); background: var(--bg-2); color: var(--text-dim); font-size: 16px; line-height: 1;
+}
+.close:hover { color: var(--text); border-color: var(--accent); }
+
+@media (max-width: 820px) {
+  .layout { grid-template-columns: 1fr; grid-template-rows: auto auto; }
+  .map-wrap { grid-row: 1; }
+  #map { position: relative; height: 52vh; }
+  #forecast { position: static; width: auto; max-height: none; margin: 12px 16px 0; backdrop-filter: none; }
+  #panel { grid-row: 2; border-right: 0; border-top: 1px solid var(--border-soft); overflow: visible; }
+  .eyebrow { margin-left: 0; }
+}
+
+/* ---------- cards & type ---------- */
+.card { background: var(--panel); border: 1px solid var(--border-soft); border-radius: var(--radius); padding: 16px 18px; }
+.card h2 { margin: 0 0 6px; font-size: 18px; font-weight: 650; letter-spacing: -0.015em; line-height: 1.25; }
+.kicker {
+  margin: 0 0 8px; font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.18em;
+  text-transform: uppercase; color: var(--accent-3);
+}
+.card .kicker:not(:first-child) { margin-top: 16px; }
+.dim { color: var(--text-dim); }
+.faint { color: var(--text-faint); }
+.small { font-size: 13px; }
+.mono { font-family: var(--font-mono); font-size: 12px; }
+p { margin: 0 0 8px; }
+
+.btn {
+  display: inline-block; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-3) 100%);
+  color: #04121a; border: 0; border-radius: 999px; padding: 10px 22px;
+}
+.btn:hover { filter: brightness(1.08); }
+
+.banner {
+  border: 1px solid rgba(255, 122, 107, 0.35); border-left: 3px solid var(--danger);
+  background: var(--danger-soft); border-radius: var(--radius-sm); padding: 11px 14px; font-size: 14px;
+}
+.banner strong { color: var(--danger); }
+
+/* ---------- lists & chips ---------- */
+.rows { list-style: none; margin: 0; padding: 0; }
+.rows li { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; padding: 9px 0; border-top: 1px solid var(--border-soft); }
+.rows li:first-child { border-top: 0; }
+.rows .why { font-size: 12px; color: var(--text-faint); text-align: right; margin-top: 3px; }
+.chip {
+  display: inline-block; font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.03em;
+  padding: 3px 10px; border-radius: 999px; white-space: nowrap;
+}
+.chip.no   { color: var(--danger); background: var(--danger-soft); }
+.chip.none { color: var(--accent-3); background: rgba(47, 191, 168, 0.09); }
+.chip.ev-issued { color: var(--danger); background: var(--danger-soft); }
+.chip.ev-lifted { color: var(--accent-3); background: rgba(47, 191, 168, 0.09); }
+.chip.ev-start  { color: var(--text-dim); background: var(--panel-2); }
+
+/* ---------- forecast outlook ---------- */
+.outlook { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.day { text-align: center; font-size: 12px; color: var(--text-dim); }
+.day .bar { height: 68px; background: var(--bg-2); border: 1px solid var(--border-soft); border-radius: 6px; position: relative; overflow: hidden; margin: 5px 0; }
+.day .fill { position: absolute; left: 0; right: 0; bottom: 0; }
+.day .pct { font-weight: 650; font-size: 15px; color: var(--text); }
+table.vars { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 8px; }
+table.vars th, table.vars td { text-align: right; padding: 5px 4px; border-top: 1px solid var(--border-soft); font-variant-numeric: tabular-nums; }
+table.vars th { font-family: var(--font-mono); font-weight: 400; color: var(--text-faint); }
+table.vars td:first-child, table.vars th:first-child { text-align: left; color: var(--text-dim); }
+
+details { margin-top: 8px; }
+details summary { cursor: pointer; font-size: 13px; color: var(--accent); }
+details p { font-size: 13px; color: var(--text-dim); white-space: pre-line; margin-top: 8px; }
+
+/* ---------- map chrome ---------- */
+.leaflet-container { font: inherit; background: var(--bg); }
+.leaflet-charm-pane img { image-rendering: pixelated; } /* crisp 3 km cells, no soft strip edges */
+.county { filter: drop-shadow(0 0 3px rgba(61, 245, 255, 0.75)); } /* neon glow on county outlines */
+.leaflet-bar a, .leaflet-bar a:hover { background: var(--panel); color: var(--text); border-bottom-color: var(--border); }
+.leaflet-bar { border: 1px solid var(--border) !important; box-shadow: none !important; }
+.leaflet-control-attribution { background: rgba(5, 9, 15, 0.75) !important; color: var(--text-faint) !important; font-size: 10px; }
+.leaflet-control-attribution a { color: var(--text-dim) !important; }
+.overlay-ctl {
+  background: rgba(13, 24, 38, 0.94); color: var(--text); border: 1px solid var(--border);
+  border-radius: 12px; padding: 12px 14px; box-shadow: var(--shadow); font-size: 13px; width: 230px;
+}
+.overlay-ctl .kicker { margin-bottom: 4px; }
+.overlay-ctl label { display: block; font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-faint); margin: 8px 0 3px; }
+.overlay-ctl select { width: 100%; font: inherit; font-size: 13px; padding: 5px 8px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-2); color: var(--text); }
+.legend-bar { height: 8px; border-radius: 99px; margin-top: 10px; background: linear-gradient(90deg, #06253d, #41349e, #804e8f, #cc6871, #fca63c, #eaf357); }
+.legend-labels { display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: 10px; color: var(--text-faint); margin-top: 3px; }
+@media (max-width: 820px) { .overlay-ctl { width: 175px; padding: 9px 11px; font-size: 12px; } }
 </style>
 </head>
 <body>
-<main class="landing">
-  <p class="kicker">Harmful algal blooms · shellfish safety</p>
-  <h1>Shore Check</h1>
-  <p class="lede">Official shellfish advisories and satellite-based harmful algal bloom forecasts, combined in one map. Pick a coast.</p>
+<header class="site-header">
+  <div class="brand"><span class="brand-mark" aria-hidden="true"></span>Shore Check <span class="brand-sub">California shellfish &amp; HAB risk</span></div>
+  <span class="eyebrow">Prototype · not for safety decisions</span>
+</header>
 
-  <div class="regions">
-    <a class="region" href="california.html">
-      <p class="kicker" style="margin:0">Pacific coast</p>
-      <h2>California</h2>
-      <p class="toxin">Domoic acid · PSP toxins</p>
-      <p class="desc">CDPH shellfish advisories by county, plus C-HARM's daily domoic acid forecast for coastal water from Baja to southern Oregon.</p>
-      <ul><li>CDPH advisories</li><li>C-HARM forecast</li><li>14-day trend</li></ul>
-      <span class="go">Open California</span>
-    </a>
-    <a class="region" href="florida.html">
-      <p class="kicker" style="margin:0">Gulf &amp; Atlantic coasts</p>
-      <h2>Florida</h2>
-      <p class="toxin">Red tide (brevetoxins) · saxitoxin</p>
-      <p class="desc">Open/closed status of every shellfish harvesting area, with the reason for each closure, plus FWC red tide samples and satellite chlorophyll fluorescence.</p>
-      <ul><li>FDACS harvest areas</li><li>FWC red tide samples</li><li>MODIS fluorescence</li></ul>
-      <span class="go">Open Florida</span>
-    </a>
+<div class="layout">
+  <aside id="panel">
+    <div id="quarantine"></div>
+
+    <div class="card">
+      <p class="kicker">Check a spot</p>
+      <h2>Is it safe to harvest here?</h2>
+      <p class="small dim">Tap the map near the shoreline, or use your location.</p>
+      <button class="btn" id="locate">Use my location</button>
+    </div>
+
+    <div id="result"></div>
+
+    <div class="card">
+      <p class="kicker">Active now · CDPH</p>
+      <div id="statewide" class="small dim">Loading from CDPH…</div>
+    </div>
+
+    <div class="card" id="history-card" hidden>
+      <p class="kicker">Advisory history</p>
+      <div id="history" class="small"></div>
+    </div>
+
+    <div class="card small">
+      <p class="kicker">How this works</p>
+      <p class="dim"><strong style="color:var(--text)">Official status</strong> is read live from the California Department of Public Health (CDPH) advisory map. It's the only thing here that says "don't eat."</p>
+      <p class="dim"><strong style="color:var(--text)">Forecast</strong> comes from C-HARM (NOAA CoastWatch, UCSC, Scripps). It gives the probability of toxic <em>Pseudo-nitzschia</em> conditions in nearby <em>seawater</em>, on a 3 km grid. It covers domoic acid only, not PSP toxins, and it doesn't measure shellfish directly.</p>
+      <p class="dim" style="margin:0">This doesn't apply to commercially sold shellfish from certified dealers. Before harvesting, check <a href="https://www.cdph.ca.gov/Programs/OPA/Pages/Shellfish-Advisories.aspx" target="_blank" rel="noopener">CDPH</a> or call 1-800-553-4133.</p>
+    </div>
+  </aside>
+  <div class="map-wrap">
+    <div id="map"></div>
+    <section id="forecast" aria-live="polite" hidden></section>
   </div>
+</div>
 
-  <p class="foot">Prototype, not for safety decisions. Always check the official agency (CDPH in California; FDACS and FWC in Florida) before harvesting. Commercially sold shellfish from certified dealers is tested separately.</p>
-</main>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<!-- Esri vector basemaps in Leaflet: MapLibre draws the vector tiles, esri-leaflet-vector loads Esri's styles -->
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<script src="https://unpkg.com/esri-leaflet@3.1.0/dist/esri-leaflet.js"></script>
+<script src="https://unpkg.com/esri-leaflet-vector@4.3.2/dist/esri-leaflet-vector.js"></script>
+<script>
+/* =====================================================================
+   1. DATA SOURCES
+   ===================================================================== */
+
+// CDPH's advisory map is an ArcGIS web map. Which counties are under which
+// advisory is stored as filters ("definitionExpression") on its layers, and
+// hidden layers are inactive advisories. We read that config directly.
+const CDPH_WEBMAP = 'https://www.arcgis.com/sharing/rest/content/items/ad52187023f24b09b073d287f656df14/data?f=json';
+const CA_OUTLINE = 'https://services.arcgis.com/P3ePLMYs2RVChkJx/arcgis/rest/services/USA_States_Generalized_Boundaries/FeatureServer/0/query?where=STATE_ABBR%3D%27CA%27&outFields=STATE_NAME&f=geojson&outSR=4326&maxAllowableOffset=0.003';
+const CDPH_COUNTIES ='https://services2.arcgis.com/wi1yEacfYjH5viqb/arcgis/rest/services/California_Coastal_Counties/FeatureServer/3/query?where=1%3D1&outFields=TITLE&f=geojson&outSR=4326&maxAllowableOffset=0.003';
+
+// Written by the scheduled data-checker (checker/check.py). Optional: the
+// page still works if these files don't exist yet.
+const HISTORY_FILE = 'data/advisory_history.json';
+const CURRENT_FILE = 'data/advisories_current.json';
+
+// C-HARM v3.1 on NOAA CoastWatch ERDDAP: nowcast + 1/2/3-day forecasts.
+// ERDDAP doesn't send CORS headers, so point queries use JSONP and map
+// layers use plain images (neither needs CORS).
+const ERDDAP = 'https://coastwatch.pfeg.noaa.gov/erddap/griddap/';
+const CHARM_DAYS = [
+  { id: 'wvcharmV3_0day', label: 'Now' },
+  { id: 'wvcharmV3_1day', label: '+1 day' },
+  { id: 'wvcharmV3_2day', label: '+2 days' },
+  { id: 'wvcharmV3_3day', label: '+3 days' },
+];
+const CHARM_VARS = {
+  particulate_domoic: 'Domoic acid in water (> 500 ng/L)',
+  cellular_domoic:    'Toxic cells (> 10 pg domoic acid/cell)',
+  pseudo_nitzschia:   'Pseudo-nitzschia bloom (> 10,000 cells/L)',
+};
+// C-HARM grid: lat 31.3–43.0, lon 232.5–243.0 (degrees east), 0.03° steps.
+const GRID = { lat0: 31.3, lat1: 43.0, lon0: 232.5, lon1: 243.0, step: 0.03 };
+
+// ERDDAP's "KT_thermal" colour scale, sampled at 0, 0.1, … 1.0, so the
+// bars in the panel match the map overlay.
+const THERMAL = ['#06253d', '#0c2e5e', '#41349e', '#664296', '#804e8f', '#ab5d83', '#cc6871', '#ee7e52', '#fca63c', '#f6d145', '#eaf357'];
+function thermal(p) {
+  const x = clamp(p, 0, 1) * 10, i = Math.min(9, Math.floor(x)), t = x - i;
+  const [a, b] = [THERMAL[i], THERMAL[i + 1]].map(h => [1, 3, 5].map(k => parseInt(h.slice(k, k + 2), 16)));
+  return `rgb(${a.map((v, k) => Math.round(v + (b[k] - v) * t)).join(',')})`;
+}
+
+const SPECIES = [
+  { id: 'mussels',  name: 'Mussels' },
+  { id: 'clams',    name: 'Clams' },
+  { id: 'razor',    name: 'Razor clams' },
+  { id: 'scallops', name: 'Scallops' },
+  { id: 'oysters',  name: 'Oysters' },
+];
+const ALL_BIVALVES = SPECIES.map(s => s.id);
+
+/* =====================================================================
+   2. SMALL HELPERS
+   ===================================================================== */
+
+function el(tag, attrs = {}, ...children) {
+  const node = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (k === 'class') node.className = v; else node.setAttribute(k, v);
+  }
+  for (const c of children) if (c != null) node.append(c);
+  return node;
+}
+
+// Turn CDPH's popup HTML into plain text (never inject their HTML directly).
+function htmlToText(html) {
+  if (!html) return '';
+  const withBreaks = html.replace(/<br\s*\/?>/gi, '\n').replace(/<\/(p|div)>/gi, '\n');
+  const text = new DOMParser().parseFromString(withBreaks, 'text/html').body.textContent || '';
+  return text.replace(/[ \t ]+/g, ' ').replace(/\n\s*\n+/g, '\n\n').trim();
+}
+
+function jsonp(url, timeoutMs = 20000) {
+  return new Promise((resolve, reject) => {
+    const cb = 'jsonp_' + Math.random().toString(36).slice(2);
+    const script = document.createElement('script');
+    const timer = setTimeout(() => { cleanup(); reject(new Error('timeout')); }, timeoutMs);
+    function cleanup() { clearTimeout(timer); delete window[cb]; script.remove(); }
+    window[cb] = data => { cleanup(); resolve(data); };
+    script.onerror = () => { cleanup(); reject(new Error('request failed')); };
+    script.src = url + '&.jsonp=' + cb;
+    document.head.append(script);
+  });
+}
+
+// ERDDAP needs [ ] | percent-encoded.
+const erddapEncode = s => s.replace(/\[/g, '%5B').replace(/\]/g, '%5D').replace(/\|/g, '%7C');
+const toLon360 = lon => (lon < 0 ? lon + 360 : lon);
+function clamp(x, a, b) { return Math.min(b, Math.max(a, x)); }
+const fmtDate = iso => new Date(iso).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', timeZone: 'UTC' });
+const riskWord = p => (p < 0.2 ? 'Low' : p < 0.5 ? 'Moderate' : 'High');
+
+/* =====================================================================
+   3. LOAD CDPH ADVISORIES
+   ===================================================================== */
+
+const ADV = { quarantine: null, areas: {}, lifted: [] };
+
+async function loadAdvisories() {
+  const webmap = await fetch(CDPH_WEBMAP).then(r => r.json());
+
+  for (const layer of webmap.operationalLayers || []) {
+    const title = layer.title || '';
+    if (!layer.visibility || /boundaries/i.test(title)) continue;
+
+    const expr = layer.layerDefinition?.definitionExpression || '';
+    const areas = [...expr.matchAll(/'([^']+)'/g)].map(m => m[1]);
+    const text = htmlToText(layer.popupInfo?.description);
+    const updated = (text.match(/Updated\s+([A-Z][a-z]+ \d{1,2}, \d{4})/) || [])[1] || null;
+
+    if (/quarantine/i.test(title)) { ADV.quarantine = { title, text }; continue; }
+    if (/lifted/i.test(title)) { areas.forEach(a => ADV.lifted.push({ area: a, title })); continue; }
+
+    let species;
+    if (/razor/i.test(title)) species = ['razor'];
+    else if (/bivalve/i.test(title)) species = ALL_BIVALVES;
+    else continue;
+
+    // "Special advisory" areas (e.g. Northern Channel Islands) are named in the layer's own features.
+    if (/special/i.test(title) && layer.url) {
+      const fs = await fetch(layer.url + '/query?where=1%3D1&outFields=TITLE&returnGeometry=false&f=json').then(r => r.json());
+      for (const f of fs.features || []) areas.push(String(f.attributes.TITLE).replace(/^Special Advisory Area\s*-\s*/i, ''));
+    }
+
+    const src = /PSP|paralytic|domoic/i.test(title) ? title : text;
+    const toxins = [/PSP|paralytic/i.test(src) && 'PSP toxins', /domoic/i.test(src) && 'domoic acid'].filter(Boolean);
+    const toxinText = toxins.join(' + ') || 'toxin';
+    const label = species.length === 1
+      ? `Razor clam ${toxinText} advisory`
+      : toxinText.charAt(0).toUpperCase() + toxinText.slice(1) + ' advisory';
+
+    for (const area of areas) {
+      (ADV.areas[area] ||= []).push({ title, label, species, toxins, updated, text: text.replace(/\{county_name\}/gi, area) });
+    }
+  }
+}
+
+function renderStatewide() {
+  const q = document.getElementById('quarantine');
+  q.replaceChildren();
+  if (ADV.quarantine) {
+    q.append(el('div', { class: 'banner' },
+      el('strong', {}, 'Statewide mussel quarantine is in effect. '),
+      'Don\'t eat sport-harvested mussels from anywhere on the California coast, including bays and harbors. Quarantine normally runs May 1 – Oct 31.'));
+  }
+
+  const box = document.getElementById('statewide');
+  box.replaceChildren();
+  const names = Object.keys(ADV.areas).sort();
+  if (!names.length) box.append('No county-level advisories are active.');
+  const list = el('ul', { class: 'rows' });
+  for (const name of names) {
+    const advs = ADV.areas[name];
+    list.append(el('li', {},
+      el('span', { style: 'color:var(--text)' }, name),
+      el('span', { class: 'why' }, advs.map(a => a.label + (a.updated ? ` (updated ${a.updated})` : '')).join('; '))));
+  }
+  box.append(list);
+  if (ADV.lifted.length) {
+    box.append(el('p', { class: 'faint', style: 'margin:10px 0 0' }, 'Recently lifted: ' + ADV.lifted.map(l => `${l.area} (${/razor/i.test(l.title) ? 'razor clams' : 'bivalves'})`).join(', ')));
+  }
+}
+
+/* =====================================================================
+   4. ADVISORY HISTORY (from the scheduled data-checker)
+   ===================================================================== */
+
+let HISTORY = [];
+
+async function loadHistory() {
+  try {
+    const [hist, cur] = await Promise.all([
+      fetch(HISTORY_FILE).then(r => r.ok ? r.json() : []),
+      fetch(CURRENT_FILE).then(r => r.ok ? r.json() : null),
+    ]);
+    HISTORY = hist;
+    if (!HISTORY.length) return;
+    const card = document.getElementById('history-card');
+    card.hidden = false;
+    const box = document.getElementById('history');
+    box.replaceChildren(historyList(HISTORY.slice(-12).reverse()));
+    if (cur) box.append(el('p', { class: 'mono faint', style: 'margin:10px 0 0' }, `Data-checker last ran ${new Date(cur.checked_at).toLocaleString()}`));
+  } catch (err) { console.warn('No history yet', err); }
+}
+
+function historyList(events) {
+  const list = el('ul', { class: 'rows' });
+  for (const e of events) {
+    const cls = e.event === 'issued' ? 'ev-issued' : e.event === 'lifted' ? 'ev-lifted' : 'ev-start';
+    const word = e.event === 'active when record began' ? 'active at start' : e.event;
+    list.append(el('li', {},
+      el('span', {}, el('span', { style: 'color:var(--text)' }, e.area), el('div', { class: 'why', style: 'text-align:left' }, e.label)),
+      el('span', { style: 'text-align:right' }, el('span', { class: 'chip ' + cls }, word),
+        el('div', { class: 'why mono' }, new Date(e.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })))));
+  }
+  return list;
+}
+
+/* =====================================================================
+   5. MAP + COUNTY LAYER
+   ===================================================================== */
+
+const map = L.map('map', { zoomControl: true, zoomSnap: 0.25 });
+
+// Open with the C-HARM data filling the map: its north and south edges at the
+// top and bottom of the map, and its western (offshore) edge on the left side.
+function fitToData() {
+  const size = map.getSize();
+  const west = GRID.lon0 - 360;
+  const span0 = map.project([GRID.lat0, west], 0).y - map.project([GRID.lat1, west], 0).y;
+  const z = Math.ceil(Math.log2(size.y / span0) * 4) / 4; // round up so there's no gap top or bottom
+  const left = map.project([GRID.lat1, west], z).x;
+  const midY = (map.project([GRID.lat1, west], z).y + map.project([GRID.lat0, west], z).y) / 2;
+  map.setView(map.unproject([left + size.x / 2, midY], z), z, { animate: false });
+}
+fitToData();
+
+// Esri "Human Geography Dark" basemap (vector tiles, so labels stay crisp).
+// Same three layers as Esri's web map 4f2e99ba65e34bb8af49733d9778fb8e:
+// base, detail at 50%, and labels, which go in their own pane above the forecast.
+map.createPane('labels');
+map.getPane('labels').style.zIndex = 650;
+map.getPane('labels').style.pointerEvents = 'none';
+const HUMAN_GEO = { base: 'd7397603e9274052808839b70812be50', detail: '1ddbb25aa29c4811aaadd94de469856a', labels: '4a3922d6d15f405d8c2b7a448a7fbad2' };
+L.esri.Vector.vectorTileLayer(HUMAN_GEO.base, { pane: 'tilePane' }).addTo(map);
+L.esri.Vector.vectorTileLayer(HUMAN_GEO.detail, { pane: 'tilePane', opacity: 0.5 }).addTo(map);
+L.esri.Vector.vectorTileLayer(HUMAN_GEO.labels, { pane: 'labels' }).addTo(map);
+
+let counties = null;
+
+function areaStyle(feature) {
+  const advs = ADV.areas[feature.properties.TITLE] || [];
+  const allBivalve = advs.some(a => a.species.length > 1);
+  const razorOnly = !allBivalve && advs.length > 0;
+  // Every county: neon aqua outline. Fill: light white, or red / amber under an advisory.
+  return {
+    className: 'county',
+    color: '#3df5ff',
+    weight: 2.2,
+    opacity: 1,
+    fillColor: allBivalve ? '#ff3b2f' : razorOnly ? '#ffc400' : '#ffffff',
+    fillOpacity: allBivalve ? 0.62 : razorOnly ? 0.58 : 0.1,
+  };
+}
+const hasAdvisory = f => (ADV.areas[f.properties.TITLE] || []).length > 0;
+
+// White California outline (Esri Living Atlas), drawn under the county lines.
+async function loadStateOutline() {
+  const gj = await fetch(CA_OUTLINE).then(r => r.json());
+  L.geoJSON(gj, { style: { color: '#ffffff', weight: 2, opacity: 0.9, fill: false }, interactive: false }).addTo(map);
+}
+
+async function loadCounties() {
+  const gj = await fetch(CDPH_COUNTIES).then(r => r.json());
+  gj.features = gj.features.filter(f => f.properties.TITLE !== 'Area');
+  // Draw advisory counties last so their colour sits on top of neighbours' fills and outlines.
+  gj.features.sort((a, b) => hasAdvisory(a) - hasAdvisory(b));
+  counties = gj;
+  L.geoJSON(gj, { style: areaStyle, interactive: false }).addTo(map);
+}
+
+// Which advisory area is a point in? Inside a polygon, or else the nearest one
+// (people tap on the water, and the county shapes are land).
+function pointInRing(x, y, ring) {
+  let inside = false;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const [xi, yi] = ring[i], [xj, yj] = ring[j];
+    if ((yi > y) !== (yj > y) && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) inside = !inside;
+  }
+  return inside;
+}
+function polygonsOf(geom) {
+  return geom.type === 'Polygon' ? [geom.coordinates] : geom.type === 'MultiPolygon' ? geom.coordinates : [];
+}
+function findArea(lat, lng) {
+  if (!counties) return null;
+  let best = null, bestD = Infinity;
+  const kx = Math.cos(lat * Math.PI / 180);
+  for (const f of counties.features) {
+    for (const poly of polygonsOf(f.geometry)) {
+      if (pointInRing(lng, lat, poly[0]) && !poly.slice(1).some(h => pointInRing(lng, lat, h))) return f.properties.TITLE;
+      for (const [x, y] of poly[0]) {
+        const d = Math.hypot((x - lng) * kx, y - lat);
+        if (d < bestD) { bestD = d; best = f.properties.TITLE; }
+      }
+    }
+  }
+  return bestD < 0.35 ? best : null; // ~35 km
+}
+
+/* =====================================================================
+   6. C-HARM MAP OVERLAY (image strips, so it lines up on a Mercator map)
+   ===================================================================== */
+
+// Strips are drawn opaque in their own pane and the pane is faded as a
+// whole, so the small overlaps between strips don't show as lines.
+map.createPane('charm');
+map.getPane('charm').style.zIndex = 350; // below county outlines (400)
+map.getPane('charm').style.opacity = 0.8;
+let overlay = L.layerGroup().addTo(map);
+const overlayState = { variable: 'particulate_domoic', day: 0 };
+
+function drawOverlay() {
+  overlay.clearLayers();
+  if (overlayState.variable === 'off') return;
+  const ds = CHARM_DAYS[overlayState.day].id;
+  const nRows = Math.round((GRID.lat1 - GRID.lat0) / GRID.step) + 1;
+  const rowsPerStrip = 33; // ~1° strips keep projection error small
+  for (let r0 = 0; r0 < nRows; r0 += rowsPerStrip) {
+    const r1 = Math.min(r0 + rowsPerStrip - 1, nRows - 1);
+    const la0 = (GRID.lat0 + r0 * GRID.step).toFixed(2);
+    const la1 = (GRID.lat0 + r1 * GRID.step).toFixed(2);
+    const q = `${overlayState.variable}[last][(${la0}):(${la1})][(${GRID.lon0}):(${GRID.lon1})]&.colorBar=KT_thermal|C|Linear|0|1|`;
+    const url = ERDDAP + ds + '.transparentPng?' + erddapEncode(q);
+    const half = GRID.step / 2, seam = 0.01; // ~1 km overlap hides sub-pixel gaps between strips
+    L.imageOverlay(url, [[+la0 - half - seam, GRID.lon0 - 360 - half], [+la1 + half + seam, GRID.lon1 - 360 + half]], { pane: 'charm' }).addTo(overlay);
+  }
+}
+
+const OverlayControl = L.Control.extend({
+  onAdd() {
+    const div = el('div', { class: 'overlay-ctl' });
+    div.innerHTML = `
+      <p class="kicker">C-HARM forecast</p>
+      <label for="ov-var">Show</label>
+      <select id="ov-var">
+        ${Object.entries(CHARM_VARS).map(([k, v]) => `<option value="${k}">${v}</option>`).join('')}
+        <option value="off">Off</option>
+      </select>
+      <label for="ov-day">Day</label>
+      <select id="ov-day">${CHARM_DAYS.map((d, i) => `<option value="${i}">${d.label}</option>`).join('')}</select>
+      <div class="legend-bar"></div>
+      <div class="legend-labels"><span>0%</span><span>probability</span><span>100%</span></div>`;
+    L.DomEvent.disableClickPropagation(div);
+    div.querySelector('#ov-var').onchange = e => { overlayState.variable = e.target.value; drawOverlay(); };
+    div.querySelector('#ov-day').onchange = e => { overlayState.day = +e.target.value; drawOverlay(); };
+    return div;
+  },
+});
+new OverlayControl({ position: 'topright' }).addTo(map);
+
+/* =====================================================================
+   7. CHECK ONE SPOT
+   ===================================================================== */
+
+async function charmAt(lat, lng) {
+  // Look in a small box (~15 km) and take the nearest ocean cell with data.
+  const d = 0.15, lon = toLon360(lng);
+  const a = clamp(lat - d, GRID.lat0, GRID.lat1).toFixed(2), b = clamp(lat + d, GRID.lat0, GRID.lat1).toFixed(2);
+  const c = clamp(lon - d, GRID.lon0, GRID.lon1).toFixed(2), e = clamp(lon + d, GRID.lon0, GRID.lon1).toFixed(2);
+  if (+a >= +b || +c >= +e) return null;
+  const vars = Object.keys(CHARM_VARS);
+  const q = vars.map(v => `${v}[last][(${a}):(${b})][(${c}):(${e})]`).join(',');
+
+  const results = await Promise.all(CHARM_DAYS.map(day =>
+    jsonp(ERDDAP + day.id + '.json?' + erddapEncode(q)).catch(() => null)));
+
+  return results.map((res, i) => {
+    if (!res) return null;
+    const cols = res.table.columnNames;
+    let best = null, bestD = Infinity;
+    for (const row of res.table.rows) {
+      const r = Object.fromEntries(cols.map((cname, k) => [cname, row[k]]));
+      if (r.particulate_domoic == null) continue;
+      const dist = Math.hypot(r.latitude - lat, (r.longitude - lon) * Math.cos(lat * Math.PI / 180));
+      if (dist < bestD) { bestD = dist; best = r; }
+    }
+    return best && { ...best, label: CHARM_DAYS[i].label, km: Math.round(bestD * 111) };
+  });
+}
+
+// For a tap on a county's land (too far inland for charmAt's ~15 km search):
+// search the county's whole latitude band, plus a strip offshore, for the
+// ocean cell nearest the tap. Every 2nd cell (":2:") keeps the request small.
+async function nearestOceanCell(area, lat, lng) {
+  const f = counties?.features.find(f => f.properties.TITLE === area);
+  if (!f) return null;
+  const pts = polygonsOf(f.geometry).flatMap(poly => poly[0]);
+  const lats = pts.map(p => p[1]), lons = pts.map(p => toLon360(p[0]));
+  const a = clamp(Math.min(...lats) - 0.1, GRID.lat0, GRID.lat1).toFixed(2);
+  const b = clamp(Math.max(...lats) + 0.1, GRID.lat0, GRID.lat1).toFixed(2);
+  const c = clamp(Math.min(...lons) - 0.5, GRID.lon0, GRID.lon1).toFixed(2);
+  const e = clamp(Math.max(...lons), GRID.lon0, GRID.lon1).toFixed(2);
+  if (+a >= +b || +c >= +e) return null;
+  const q = `particulate_domoic[last][(${a}):2:(${b})][(${c}):2:(${e})]`;
+  const res = await jsonp(ERDDAP + 'wvcharmV3_0day.json?' + erddapEncode(q));
+  const kx = Math.cos(lat * Math.PI / 180), lon = toLon360(lng);
+  let best = null, bestD = Infinity;
+  for (const [, la, lo, p] of res.table.rows) {
+    if (p == null) continue;
+    const d = Math.hypot(la - lat, (lo - lon) * kx);
+    if (d < bestD) { bestD = d; best = { lat: la, lng: lo - 360 }; }
+  }
+  return best;
+}
+
+let marker = null, cellMarker = null, checkCount = 0;
+// Past `days` days of the C-HARM nowcast for one grid cell.
+async function charmTrend(cellLat, cellLon360, days = 7) {
+  // Start date as "YYYY-MM-DDT00:00:00Z", `days` days ago
+  const start = new Date(Date.now() - days * 86400000).toISOString().slice(0, 10) + 'T00:00:00Z';
+  const q = `particulate_domoic[(${start}):(last)][(${cellLat})][(${cellLon360})]`;
+  const res = await jsonp(ERDDAP + 'wvcharmV3_0day.json?' + erddapEncode(q));
+  // Each row is [time, latitude, longitude, value]; skip empty days
+  return res.table.rows
+    .filter(row => row[3] != null)
+    .map(row => ({ time: row[0], p: row[3] }));
+}
+// Small SVG line chart: one dot per day, dashed line at 50%.
+function trendChart(points) {
+  const W = 340, H = 100, pad = 20;
+  const x = i => pad + (i * (W - 2 * pad)) / Math.max(1, points.length - 1);
+  const y = p => H - pad - p * (H - 2 * pad);   // p = 0 at the bottom, 1 at the top
+
+  const NS = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(NS, 'svg');
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  svg.style.width = '100%';
+  const add = (tag, attrs) => {
+    const node = document.createElementNS(NS, tag);
+    for (const [k, v] of Object.entries(attrs)) node.setAttribute(k, v);
+    svg.append(node);
+    return node;
+  };
+
+  add('line', { x1: pad, x2: W - pad, y1: y(0.5), y2: y(0.5), stroke: '#1c3348', 'stroke-dasharray': '3 3' });
+  add('polyline', {
+    points: points.map((d, i) => `${x(i)},${y(d.p)}`).join(' '),
+    fill: 'none', stroke: '#5ad7e8', 'stroke-width': 2,
+  });
+  points.forEach((d, i) => {
+    add('circle', { cx: x(i), cy: y(d.p), r: 4, fill: thermal(d.p) });
+    // Label every other day, counting back from the newest, so labels don't overlap
+    if ((points.length - 1 - i) % 2 !== 0) return;
+    add('text', { x: x(i), y: H - 4, 'text-anchor': 'middle', 'font-size': 10, fill: '#6b8299' }).textContent =
+      new Date(d.time).toLocaleDateString(undefined, { month: 'short', day: 'numeric', timeZone: 'UTC' });
+  });
+  return svg;
+}
+async function checkSpot(lat, lng) {
+  if (marker) marker.remove();
+  marker = L.circleMarker([lat, lng], { radius: 8, color: '#5ad7e8', weight: 3, fillColor: '#05090f', fillOpacity: 1 }).addTo(map);
+
+  const out = document.getElementById('result');
+  const area = findArea(lat, lng);
+  const card = el('div', { class: 'card' });
+  out.replaceChildren(card);
+  if (window.innerWidth <= 820) card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  card.append(el('p', { class: 'kicker' }, 'Selected spot'));
+  card.append(el('h2', {}, area || 'Outside CDPH coastal areas'));
+  card.append(el('div', { class: 'mono faint' }, `${lat.toFixed(4)}, ${lng.toFixed(4)}`));
+
+  // --- Official status, per species ---
+  card.append(el('p', { class: 'kicker' }, 'Official status · CDPH'));
+  const list = el('ul', { class: 'rows' });
+  const advs = area ? (ADV.areas[area] || []) : [];
+  for (const sp of SPECIES) {
+    const reasons = [];
+    if (sp.id === 'mussels' && ADV.quarantine) reasons.push('Statewide mussel quarantine');
+    for (const a of advs) if (a.species.includes(sp.id)) reasons.push(a.label);
+    list.append(el('li', {},
+      el('span', {}, sp.name),
+      el('span', { style: 'text-align:right' },
+        el('span', { class: 'chip ' + (reasons.length ? 'no' : 'none') }, reasons.length ? 'Do not eat' : 'No active advisory'),
+        reasons.length ? el('div', { class: 'why' }, reasons.join(' · ')) : null)));
+  }
+  card.append(list);
+  card.append(el('p', { class: 'small faint', style: 'margin:8px 0 0' },
+    '"No active advisory" doesn\'t mean tested safe. CDPH samples a limited number of sites.'));
+  for (const a of advs) {
+    card.append(el('details', {}, el('summary', {}, `Read CDPH notice: ${a.label}`), el('p', {}, a.text)));
+  }
+
+  // --- Advisory history for this area ---
+  const past = HISTORY.filter(e => e.area === area || e.area === 'Statewide');
+  if (area && past.length) {
+    card.append(el('details', {}, el('summary', {}, `Advisory history for ${area} (${past.length})`), historyList(past.slice().reverse())));
+  }
+
+  // --- C-HARM forecast: shown in the floating panel on the map ---
+  card.append(el('p', { class: 'small faint', style: 'margin:14px 0 0' },
+    window.innerWidth <= 820 ? 'The C-HARM forecast for this spot is above, under the map.' : 'The C-HARM forecast for this spot is in the panel on the map →'));
+
+  const fp = document.getElementById('forecast');
+  const closeBtn = el('button', { class: 'close', 'aria-label': 'Close forecast' }, '×');
+  closeBtn.onclick = () => { fp.hidden = true; };
+  fp.replaceChildren(closeBtn,
+    el('p', { class: 'kicker' }, 'Domoic acid outlook · C-HARM'),
+    el('div', { class: 'mono faint', style: 'margin:-4px 0 10px' }, area || 'Selected spot'));
+  fp.hidden = false;
+  const fc = el('div', { class: 'small dim' }, 'Loading forecast…');
+  fp.append(fc);
+
+  // If the panel covers the tapped spot, slide the map left so the marker stays visible.
+  if (window.innerWidth > 820) {
+    const panel = fp.getBoundingClientRect(), box = map.getContainer().getBoundingClientRect();
+    const pt = map.latLngToContainerPoint([lat, lng]);
+    const x = pt.x + box.left, y = pt.y + box.top;
+    // The panel grows as data loads, so test against its full possible height (top ~260px of map is free).
+    if (x > panel.left - 24 && y > box.top + 260) map.panBy([x - (panel.left - 80), 0]);
+  }
+
+  const thisCheck = ++checkCount;
+  const noData = ds => !ds || ds.every(d => !d);
+  let days, viaCounty = false;
+  try {
+    days = await charmAt(lat, lng);
+    // Tapped inland? Use the ocean cell nearest the tap within this county's stretch of coast.
+    if (noData(days) && area) {
+      const cell = await nearestOceanCell(area, lat, lng);
+      if (cell) { days = await charmAt(cell.lat, cell.lng); viaCounty = true; }
+    }
+  } catch { days = null; }
+  if (thisCheck !== checkCount) return; // a newer tap has replaced this one
+
+  fc.replaceChildren();
+  if (cellMarker) cellMarker.remove();
+  if (noData(days)) {
+    fc.append('No C-HARM data near this spot. The model covers coastal ocean from Baja to southern Oregon; try tapping just offshore.');
+    return;
+  }
+
+  // Show which ocean cell the numbers come from.
+  const cell = days.find(Boolean);
+  cellMarker = L.circleMarker([cell.latitude, cell.longitude - 360], { radius: 5, color: '#3df5ff', weight: 2, fillColor: '#3df5ff', fillOpacity: 0.5, dashArray: '2 2' })
+    .bindTooltip('C-HARM forecast cell').addTo(map);
+  if (viaCounty) {
+    fc.append(el('p', { class: 'faint', style: 'margin:0 0 10px' },
+      `Inland tap: showing the ${area} coastal ocean cell nearest you (dashed circle on the map).`));
+  }
+
+  const grid = el('div', { class: 'outlook' });
+  for (const d of days) {
+    if (!d) { grid.append(el('div', { class: 'day' }, '–')); continue; }
+    const p = d.particulate_domoic;
+    const bar = el('div', { class: 'bar' }, el('div', { class: 'fill', style: `height:${Math.max(3, p * 100)}%;background:${thermal(p)}` }));
+    grid.append(el('div', { class: 'day' },
+      el('div', { class: 'mono' }, d.label), bar,
+      el('div', { class: 'pct' }, Math.round(p * 100) + '%'),
+      el('div', {}, riskWord(p)),
+      el('div', { class: 'faint' }, fmtDate(d.time))));
+  }
+  fc.append(grid);
+
+  const first = days.find(Boolean);
+
+  const trendBox = el('div', { class: 'small faint' }, 'Loading 14-day trend…');
+  fc.append(el('p', { class: 'kicker sub' }, 'Past 14 days · C-HARM nowcast'), trendBox);
+  charmTrend(first.latitude, first.longitude, 14)
+    .then(points => trendBox.replaceChildren(trendChart(points)))
+    .catch(() => trendBox.replaceChildren('Couldn\'t load the 14-day trend.'));
+
+  // Details tucked away so the panel stays compact
+  const table = el('table', { class: 'vars' });
+  table.append(el('tr', {}, el('th', {}, ''), ...days.map(d => el('th', {}, d ? d.label : '–'))));
+  for (const [k, name] of Object.entries(CHARM_VARS)) {
+    table.append(el('tr', {}, el('td', {}, name), ...days.map(d => el('td', {}, d && d[k] != null ? Math.round(d[k] * 100) + '%' : '–'))));
+  }
+  fc.append(el('details', {}, el('summary', {}, 'About these numbers'),
+    el('p', {}, `Probability that particulate domoic acid exceeds 500 ng/L in the nearest 3 km ocean cell (${first.km} km away). Low / Moderate / High bands (20% / 50%) are this prototype's choice, not an official threshold.\n\nThis forecasts seawater, not shellfish. Shellfish build up and clear toxin over days to months (razor clams hold it longest). Doesn't cover PSP toxins.`),
+    table));
+}
+
+map.on('click', e => checkSpot(e.latlng.lat, e.latlng.lng));
+
+document.getElementById('locate').onclick = () => {
+  if (!navigator.geolocation) return alert('Location is not available in this browser.');
+  navigator.geolocation.getCurrentPosition(
+    pos => { const { latitude: la, longitude: lo } = pos.coords; map.setView([la, lo], 10); checkSpot(la, lo); },
+    () => alert('Couldn\'t get your location. Tap the map instead.'));
+};
+
+/* =====================================================================
+   8. START
+   ===================================================================== */
+
+(async () => {
+  try {
+    await loadAdvisories();
+    renderStatewide();
+  } catch (err) {
+    document.getElementById('statewide').textContent = 'Couldn\'t load CDPH advisories. Check the CDPH site directly.';
+    console.error(err);
+  }
+  try { await loadStateOutline(); } catch (err) { console.error(err); }
+  try { await loadCounties(); } catch (err) { console.error(err); }
+  drawOverlay();
+  loadHistory();
+})();
+</script>
 </body>
 </html>
