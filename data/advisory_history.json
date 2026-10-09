@@ -56,5 +56,18 @@
   "updated": null,
   "date": "2026-10-05T22:43Z",
   "event": "active when record began"
+ },
+ {
+  "area": "Del Norte County",
+  "label": "Razor clam domoic acid advisory",
+  "species": [
+   "razor"
+  ],
+  "toxins": [
+   "domoic acid"
+  ],
+  "updated": "October 8, 2026",
+  "date": "2026-10-09T01:14Z",
+  "event": "issued"
  }
 ]

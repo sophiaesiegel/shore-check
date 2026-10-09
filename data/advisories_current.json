@@ -1,5 +1,5 @@
 {
- "checked_at": "2026-10-08T18:52Z",
+ "checked_at": "2026-10-09T01:14Z",
  "active": {
   "Statewide|mussel quarantine": {
    "area": "Statewide",
@@ -34,7 +34,18 @@
    "toxins": [
     "domoic acid"
    ],
-   "updated": "July 29, 2026"
+   "updated": "October 8, 2026"
+  },
+  "Del Norte County|Razor clam domoic acid advisory": {
+   "area": "Del Norte County",
+   "label": "Razor clam domoic acid advisory",
+   "species": [
+    "razor"
+   ],
+   "toxins": [
+    "domoic acid"
+   ],
+   "updated": "October 8, 2026"
   },
   "Monterey County|Domoic acid advisory": {
    "area": "Monterey County",
