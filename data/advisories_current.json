@@ -1,5 +1,5 @@
 {
- "checked_at": "2026-10-13T06:48Z",
+ "checked_at": "2026-10-13T16:57Z",
  "active": {
   "Statewide|mussel quarantine": {
    "area": "Statewide",
@@ -46,21 +46,6 @@
     "domoic acid"
    ],
    "updated": "October 8, 2026"
-  },
-  "Monterey County|Domoic acid advisory": {
-   "area": "Monterey County",
-   "label": "Domoic acid advisory",
-   "species": [
-    "mussels",
-    "clams",
-    "razor",
-    "scallops",
-    "oysters"
-   ],
-   "toxins": [
-    "domoic acid"
-   ],
-   "updated": null
   }
  }
 }

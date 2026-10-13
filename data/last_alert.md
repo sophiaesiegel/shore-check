@@ -1,5 +1,5 @@
-# Shore Check: 1 change (Oct 10)
+# Shore Check: 1 change (Oct 13)
 
-- C-HARM domoic acid risk at **Trinidad Pier** rose to 61% (was 36%).
+- LIFTED: Domoic acid advisory, Monterey County (mussels, clams, razor, scallops, oysters)
 
 Always confirm with CDPH: https://www.cdph.ca.gov/Programs/OPA/Pages/Shellfish-Advisories.aspx or 1-800-553-4133.
