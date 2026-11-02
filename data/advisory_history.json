@@ -86,5 +86,16 @@
   "updated": null,
   "date": "2026-10-13T16:57Z",
   "event": "lifted"
+ },
+ {
+  "area": "Statewide",
+  "label": "Mussel quarantine",
+  "species": [
+   "mussels"
+  ],
+  "toxins": [],
+  "updated": null,
+  "date": "2026-11-02T21:43Z",
+  "event": "lifted"
  }
 ]

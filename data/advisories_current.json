@@ -1,15 +1,6 @@
 {
- "checked_at": "2026-11-02T11:12Z",
+ "checked_at": "2026-11-02T21:43Z",
  "active": {
-  "Statewide|mussel quarantine": {
-   "area": "Statewide",
-   "label": "Mussel quarantine",
-   "species": [
-    "mussels"
-   ],
-   "toxins": [],
-   "updated": null
-  },
   "Northern Channel Islands|Domoic acid advisory": {
    "area": "Northern Channel Islands",
    "label": "Domoic acid advisory",
