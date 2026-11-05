@@ -70,6 +70,25 @@ a:hover { text-decoration: underline; text-underline-offset: 3px; }
   color: var(--warn); padding: 4px 11px; border: 1px solid var(--border); border-radius: 999px; background: var(--panel);
 }
 
+/* ---------- about button + panel ---------- */
+.about-btn {
+  font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; cursor: pointer;
+  color: var(--accent); padding: 4px 13px; border: 1px solid var(--border); border-radius: 999px; background: var(--panel);
+}
+.about-btn:hover { border-color: var(--accent); }
+.about-overlay {
+  position: fixed; inset: 0; z-index: 3000; display: flex; align-items: flex-start; justify-content: center;
+  padding: 70px 16px 24px; background: rgba(5, 9, 15, 0.78); backdrop-filter: blur(4px); overflow-y: auto;
+}
+.about-overlay[hidden] { display: none; }
+.about-sheet {
+  position: relative; width: 100%; max-width: 620px; background: var(--panel); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 22px 24px; box-shadow: var(--shadow);
+}
+.about-sheet h2 { margin: 0 0 10px; font-size: 20px; font-weight: 650; letter-spacing: -0.015em; }
+.about-sheet p { color: var(--text-dim); font-size: 14px; }
+.about-sheet .kicker.sub { margin-top: 18px; }
+
 /* ---------- layout ---------- */
 .layout { flex: 1; display: grid; grid-template-columns: 420px 1fr; min-height: 0; }
 #panel {
@@ -195,7 +214,55 @@ details p { font-size: 13px; color: var(--text-dim); white-space: pre-line; marg
 <header class="site-header">
   <div class="brand"><span class="brand-mark" aria-hidden="true"></span>Shore Check <span class="brand-sub">California shellfish &amp; HAB risk</span></div>
   <span class="eyebrow">Prototype<span class="eyebrow-long"> · not for safety decisions</span></span>
+  <button type="button" class="about-btn" id="about-open" aria-haspopup="dialog" aria-controls="about">About</button>
 </header>
+
+<div id="about" class="about-overlay" role="dialog" aria-modal="true" aria-labelledby="about-title" hidden>
+  <div class="about-sheet">
+    <button type="button" class="close" id="about-close" aria-label="Close about">&times;</button>
+    <p class="kicker">About</p>
+    <h2 id="about-title">What Shore Check is</h2>
+    <p>
+      Shore Check puts California's official shellfish advisories next to NOAA's forecasts of
+      domoic acid risk in one map. You pick a spot on the coast and see the official status for
+      each kind of shellfish, how that area's advisories have changed, and a four-day outlook
+      for the nearest ocean cell.
+    </p>
+
+    <p class="kicker sub">A prototype early warning system</p>
+    <p>
+      Advisories follow testing: they appear after toxin has been found in shellfish. A forecast
+      looks the other way, at the ocean conditions that tend to come first. Shore Check is a
+      prototype of a harmful algal bloom (HAB) early warning system that reads the two together.
+      A scheduled checker runs every three hours and keeps a record of each advisory issued or
+      lifted and the forecast at nine pier sites, so the gap between "high forecast" and
+      "advisory issued" can be measured over time.
+    </p>
+    <p>
+      It is a prototype and not for safety decisions. The official CDPH advisory is the only
+      thing here that says not to eat shellfish, and the forecast does not measure shellfish
+      directly.
+    </p>
+
+    <p class="kicker sub">How it connects to PACE</p>
+    <p>
+      The forecast layer is C-HARM, the California Harmful Algae Risk Mapping system. NASA's PACE
+      mission (Plankton, Aerosol, Cloud, ocean Ecosystem) measures ocean color in much finer
+      spectral detail than earlier satellites. Clarissa Anderson at Scripps Institution of
+      Oceanography leads a PACE early adopter project,
+      <a href="https://pace.oceansciences.org/people_ea.htm?id=51" target="_blank" rel="noopener">Applying PACE Products to the California Harmful Algae Risk Mapping (C-HARM) System</a>,
+      which plans to use downscaled PACE spectral bands to replace MODIS data and complement
+      VIIRS data in C-HARM. Shore Check displays C-HARM, so improvements to that forecast would
+      show up here.
+    </p>
+
+    <p class="small faint" style="margin-bottom:0">
+      Data: CDPH advisories, NOAA CoastWatch ERDDAP (C-HARM v3.1), Esri basemaps. Before
+      harvesting, check <a href="https://www.cdph.ca.gov/Programs/OPA/Pages/Shellfish-Advisories.aspx" target="_blank" rel="noopener">CDPH</a>
+      or call 1-800-553-4133.
+    </p>
+  </div>
+</div>
 
 <div class="layout">
   <aside id="panel">
@@ -840,6 +907,22 @@ moveForecastPanel();
   try { await loadCounties(); } catch (err) { console.error(err); }
   drawOverlay();
   loadHistory();
+})();
+</script>
+<script>
+// About panel: opens from the header button, closes with ×, Esc, or a click outside the sheet.
+(function () {
+  var panel = document.getElementById('about');
+  var openBtn = document.getElementById('about-open');
+  var closeBtn = document.getElementById('about-close');
+  function show(on) {
+    panel.hidden = !on;
+    if (on) closeBtn.focus(); else openBtn.focus();
+  }
+  openBtn.addEventListener('click', function () { show(true); });
+  closeBtn.addEventListener('click', function () { show(false); });
+  panel.addEventListener('click', function (e) { if (e.target === panel) show(false); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !panel.hidden) show(false); });
 })();
 </script>
 </body>
